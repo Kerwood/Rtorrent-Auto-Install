@@ -30,7 +30,7 @@ This scripts installs the following packages with APT.
 The script compiles and installs xmlrpc-c from svn.
 The script compiles and installs rtorrent-0.9.3 and libtorrent-0.13.2
 downloaded at official site.
-
+The scripts downloads rutorrent-3.5 from official site.
 
 ################### Plugin List ###################
 

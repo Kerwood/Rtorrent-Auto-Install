@@ -53,16 +53,16 @@ make install
 cd ..
 rm -rv libtorrent-0.13.2*
 
-wget http://libtorrent.rakshasa.no/downloads/rtorrent-0.9.3.tar.gz
-tar -zxvf rtorrent-0.9.3.tar.gz
-cd rtorrent-0.9.3
+wget http://libtorrent.rakshasa.no/downloads/rtorrent-0.9.2.tar.gz
+tar -zxvf rtorrent-0.9.2.tar.gz
+cd rtorrent-0.9.2
 ./autogen.sh
 ./configure --with-xmlrpc-c
 make
 make install
 ldconfig
 cd  ..
-rm -rv rtorrent-0.9.3*
+rm -rv rtorrent-0.9.2*
 
 if [ ! -d "$homedir"/.rtorrent-session ]; then
 	mkdir "$homedir"/.rtorrent-session
@@ -197,8 +197,7 @@ if [ ! -h /etc/apache2/mods-enabled/scgi.load ]; then
         ln -s /etc/apache2/mods-available/scgi.load /etc/apache2/mods-enabled/scgi.load
 fi
 
-
-wget http://rutorrent.googlecode.com/files/rutorrent-3.3.tar.gz
+wget https://rutorrent.googlecode.com/files/rutorrent-3.5.tar.gz
 tar -zxvf rutorrent-3.3.tar.gz
 
 if [ -d /var/www/rutorrent ]; then
