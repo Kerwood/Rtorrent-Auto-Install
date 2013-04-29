@@ -7,6 +7,8 @@ Also you will get the opportunity of installing 33 addons. See list further down
 The script adds a line en the given users crontab, that makes rtorrent start at
 a possible reboot.
 
+Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
+
 ###################### Installs #####################
 
 This scripts installs the following packages with APT.
