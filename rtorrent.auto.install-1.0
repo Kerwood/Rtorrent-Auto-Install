@@ -33,6 +33,7 @@ done
 
 homedir=$(cat /etc/passwd | grep "$user": | cut -d: -f6)
 
+apt-get update
 apt-get install openssl subversion apache2 build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen
 
 svn checkout http://xmlrpc-c.svn.sourceforge.net/svnroot/xmlrpc-c/stable xmlrpc-c
@@ -198,14 +199,14 @@ if [ ! -h /etc/apache2/mods-enabled/scgi.load ]; then
 fi
 
 wget https://rutorrent.googlecode.com/files/rutorrent-3.5.tar.gz
-tar -zxvf rutorrent-3.3.tar.gz
+tar -zxvf rutorrent-3.5.tar.gz
 
 if [ -d /var/www/rutorrent ]; then
 	rm -r /var/www/rutorrent
 fi
 
 mv -f rutorrent /var/www/
-rm -v rutorrent-3.3.tar.gz
+rm -v rutorrent-3.5.tar.gz
 
 plugindir="/var/www/rutorrent/plugins/"
 
