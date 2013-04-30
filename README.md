@@ -5,8 +5,8 @@ This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing 33 plugins/addons. See list further down.
-The script adds a line en the given users crontab, that makes rtorrent start at
-a possible reboot.
+The script adds a line in root's crontab, that makes rtorrent start, at
+a possible reboot, in the given username's screen session.
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
