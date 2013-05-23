@@ -10,6 +10,12 @@ a possible reboot, in the given username's screen session.
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
+**Version 1.0.3**
+Added unzip and unrar to the installation list.
+Updated "Logoff" plugin to 1.3
+Add right permissions to rutorrent folder.
+
+
 **Installs**
 
 This scripts installs the following packages with APT.
@@ -29,6 +35,8 @@ This scripts installs the following packages with APT.
 	php5-cli 
 	libapache2-mod-php5 
 	screen
+	unrar
+	unzip
 
 The script compiles and installs xmlrpc-c from svn.
 Installs rtorrent-0.9.3 and libtorrent-0.13.2, downloaded at official site.
