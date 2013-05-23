@@ -12,9 +12,9 @@ Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will all
 
 **Version 1.0.3**
 
-Added unzip and unrar to the installation list.
-Updated "Logoff" plugin to 1.3
-Add right permissions to rutorrent folder.
+- Added unzip and unrar to the installation list.
+- Updated "Logoff" plugin to 1.3
+- Add right permissions to rutorrent folder.
 
 
 **Installs**
