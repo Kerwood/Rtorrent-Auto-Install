@@ -11,6 +11,7 @@ a possible reboot, in the given username's screen session.
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
 **Version 1.0.3**
+
 Added unzip and unrar to the installation list.
 Updated "Logoff" plugin to 1.3
 Add right permissions to rutorrent folder.
