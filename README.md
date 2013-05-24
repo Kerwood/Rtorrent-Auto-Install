@@ -30,7 +30,7 @@ This scripts installs the following packages with APT.
 	php5-cli 
 	libapache2-mod-php5 
 	screen
-	unrar
+	unrar-free
 	unzip
 
 The script compiles and installs xmlrpc-c from svn.
@@ -92,7 +92,7 @@ Installs rutorrent-3.5 from official site.
 
 **Version 1.0.3**
 
-- Added unzip and unrar to the installation list.
+- Added unzip and unrar-free to the installation list.
 - Updated "Logoff" plugin to 1.3
 - Add right permissions to rutorrent folder.
 
