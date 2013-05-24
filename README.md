@@ -4,17 +4,11 @@
 This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
 In the installation process you have to choose a system user to run rtorrent.
-Also you will get the opportunity of installing 33 plugins/addons. See list further down.
+Also you will get the opportunity of installing 43 plugins/addons. See list further down.
 The script adds a line in root's crontab, that makes rtorrent start, at
 a possible reboot, in the given username's screen session.
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
-
-**Version 1.0.3**
-
-- Added unzip and unrar to the installation list.
-- Updated "Logoff" plugin to 1.3
-- Add right permissions to rutorrent folder.
 
 
 **Installs**
@@ -78,3 +72,27 @@ Installs rutorrent-3.5 from official site.
 - 31 - Logoff Plugin
 - 32 - Pause Plugin
 - 33 - Instant Search Plugin
+- 34 - File Drop (FF > 3.6 & Chrome only).
+- 35 - Check Port
+- 36 - History
+- 37 - iPad
+- 38 - Extended Ratio
+- 39 - Feeds
+- 40 - Media Information
+- 41 - RSS URL Rewrite
+- 42 - Screenshot
+- 43 - All Plugins v3.5, Download manually to se which ones. http://code.google.com/p/rutorrent/downloads/detail?name=plugins-3.5.tar.gz
+
+
+**Version 1.0.4**
+
+- 10 new plugins added to list.
+- All plugins updatet to newest version.
+
+
+**Version 1.0.3**
+
+- Added unzip and unrar to the installation list.
+- Updated "Logoff" plugin to 1.3
+- Add right permissions to rutorrent folder.
+
