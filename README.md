@@ -84,6 +84,9 @@ Installs rutorrent-3.5 from official site.
 - 43 - All Plugins v3.5, Download manually to se which ones. http://code.google.com/p/rutorrent/downloads/detail?name=plugins-3.5.tar.gz
 
 
+**Version 1.0.5**
+BUGFIX - Directory path for "All plugins" plugin.
+
 **Version 1.0.4**
 
 - 10 new plugins added to list.
