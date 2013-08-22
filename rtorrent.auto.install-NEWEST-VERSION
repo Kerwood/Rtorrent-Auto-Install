@@ -36,7 +36,7 @@ homedir=$(cat /etc/passwd | grep "$user": | cut -d: -f6)
 apt-get update
 apt-get install openssl subversion apache2 build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unrar-free unzip
 
-svn checkout http://xmlrpc-c.svn.sourceforge.net/svnroot/xmlrpc-c/stable xmlrpc-c
+svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc-c
 cd xmlrpc-c
 ./configure --disable-cplusplus
 make
