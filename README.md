@@ -16,7 +16,8 @@ Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will all
 This scripts installs the following packages with APT.
 
 	openssl 
-	subversion 
+	subversion
+	git
 	apache2 
 	build-essential 
 	libsigc++-2.0-dev 
@@ -81,8 +82,19 @@ Installs rutorrent-3.5 from official site.
 - 40 - Media Information
 - 41 - RSS URL Rewrite
 - 42 - Screenshot
-- 43 - All Plugins v3.5, Download manually to se which ones. http://code.google.com/p/rutorrent/downloads/detail?name=plugins-3.5.tar.gz
+- 43 - RPC
+- 44 - Rutracker Check
+- 45 - Noty 
+- 46 - Task 
+- 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files
 
+
+**Version 1.0.6**
+
+- Script now downloads newest version og libtorrent and rtorrent, via github. Current version: rtorrent 0.9.3
+- Updated to download Rutorrent 3.6
+- Updated all plugins
+- Added more plugins
 
 **Version 1.0.5**
 BUGFIX - Directory path for "All plugins" plugin.
