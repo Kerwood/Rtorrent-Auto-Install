@@ -35,8 +35,8 @@ This scripts installs the following packages with APT.
 	unrar-free
 	unzip
 
-The script compiles and installs xmlrpc-c from svn.
-Installs rtorrent-0.9.3 and libtorrent-0.13.2, from github.
+The script compiles and installs xmlrpc-c from svn.  
+Installs rtorrent-0.9.3 and libtorrent-0.13.2, from github.  
 Installs rutorrent-3.5 from official site.
 
 **Plugin List**
@@ -89,7 +89,7 @@ Installs rutorrent-3.5 from official site.
 - 46 - Task 
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files
 
-**Version 2.0.0**
+**Version 2.0.0**  
 The script now uses an init script to startup rtorrent at boot, instead of the crontab work around.
 Use "service rtorrent-init start" and "service rtorrent-init stop" to start and stop rtorrent.
 
@@ -101,7 +101,7 @@ Use "service rtorrent-init start" and "service rtorrent-init stop" to start and 
 - Updated all plugins
 - Added more plugins
 
-**Version 1.0.5**
+**Version 1.0.5**  
 BUGFIX - Directory path for "All plugins" plugin.
 
 **Version 1.0.4**
