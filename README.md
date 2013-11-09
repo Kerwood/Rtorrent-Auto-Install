@@ -5,8 +5,9 @@ This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing 43 plugins/addons. See list further down.
-The script adds a line in root's crontab, that makes rtorrent start, at
-a possible reboot, in the given username's screen session.
+The script add a init script that makes rtorrent start, at a possible reboot, in the 
+given username's screen session. Use "service rtorrent-init start" and 
+"service rtorrent-init stop" to start and stop rtorrent.
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
@@ -35,7 +36,7 @@ This scripts installs the following packages with APT.
 	unzip
 
 The script compiles and installs xmlrpc-c from svn.
-Installs rtorrent-0.9.3 and libtorrent-0.13.2, downloaded at official site.
+Installs rtorrent-0.9.3 and libtorrent-0.13.2, from github.
 Installs rutorrent-3.5 from official site.
 
 **Plugin List**
@@ -87,6 +88,10 @@ Installs rutorrent-3.5 from official site.
 - 45 - Noty 
 - 46 - Task 
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files
+
+**Version 2.0.0**
+The script now uses an init script to startup rtorrent at boot, instead of the crontab work around.
+Use "service rtorrent-init start" and "service rtorrent-init stop" to start and stop rtorrent.
 
 
 **Version 1.0.6**
