@@ -112,7 +112,7 @@ if ! [ -s ${session}/rtorrent.lock ] ; then
 return
 fi
 pid=`cat ${session}/rtorrent.lock | awk -F: '{print($2)}' | sed "s/[^0-9]//g"`
-if ps -A | grep -sq ${pid}.*rtorrent ; then # make sure the pid doesn't belong to another process
+if [ $(ps aux | grep rtorrent | grep ${pid} | wc -l) = "1" ]; then # make sure the pid doesn't belong to another process
 kill -s INT ${pid}
 fi
 }
