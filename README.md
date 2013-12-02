@@ -19,7 +19,8 @@ This scripts installs the following packages with APT.
 	openssl 
 	subversion
 	git
-	apache2 
+	apache2
+	apache2-utils 
 	build-essential 
 	libsigc++-2.0-dev 
 	libcurl4-openssl-dev 
@@ -88,6 +89,9 @@ Installs rutorrent-3.5 from official site.
 - 45 - Noty 
 - 46 - Task 
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files
+
+**Version 2.0.1**  
+Added apache2-utils to the package managers install list.
 
 **Version 2.0.0**  
 The script now uses an init script to startup rtorrent at boot, instead of the crontab work around.
