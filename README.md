@@ -1,5 +1,6 @@
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
 
+http://linuxbloggen.dk/
 
 This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
@@ -10,6 +11,17 @@ given username's screen session. Use "service rtorrent-init start" and
 "service rtorrent-init stop" to start and stop rtorrent.
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
+
+**Installation**
+
+Download the script.
+	wget https://raw.github.com/Kerwood/rtorrent.auto.install/master/rtorrent.auto.install-NEWEST-VERSION
+
+Make it executable.
+	chmod +x rtorrent.auto.install-NEWEST-VERSION
+
+Run the script.
+	sudo ./rtorrent.auto.install-NEWEST-VERSION
 
 
 **Installs**
