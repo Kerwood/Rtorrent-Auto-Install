@@ -14,13 +14,13 @@ Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will all
 
 **Installation**
 
-Download the script.
+Download the script. 
 	wget https://raw.github.com/Kerwood/rtorrent.auto.install/master/rtorrent.auto.install-NEWEST-VERSION
 
-Make it executable.
+Make it executable. 
 	chmod +x rtorrent.auto.install-NEWEST-VERSION
 
-Run the script.
+Run the script. 
 	sudo ./rtorrent.auto.install-NEWEST-VERSION
 
 
