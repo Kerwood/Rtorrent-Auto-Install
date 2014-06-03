@@ -49,16 +49,18 @@ rm -rv xmlrpc-c
 mkdir rtorrent
 cd rtorrent
 
-git clone https://github.com/rakshasa/libtorrent
-cd libtorrent
+wget http://libtorrent.rakshasa.no/downloads/libtorrent-0.13.3.tar.gz
+tar -zxvf libtorrent-0.13.3.tar.gz
+cd libtorrent-0.13.3
 ./autogen.sh
 ./configure
 make
 make install
 cd ..
 
-git clone https://github.com/rakshasa/rtorrent
-cd rtorrent
+wget http://libtorrent.rakshasa.no/downloads/rtorrent-0.9.3.tar.gz
+tar -zxvf rtorrent-0.9.3.tar.gz
+cd rtorrent-0.9.3
 ./autogen.sh
 ./configure --with-xmlrpc-c
 make
