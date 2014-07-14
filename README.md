@@ -103,7 +103,7 @@ Installs rutorrent-3.5 from official site.
 - 44 - Rutracker Check
 - 45 - Noty 
 - 46 - Task 
-- 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files
+- 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent
 
 **Version 2.0.4**  
 Fixed the OS check, so now it should be working as intended.
