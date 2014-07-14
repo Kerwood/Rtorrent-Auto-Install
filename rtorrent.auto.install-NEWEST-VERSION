@@ -12,7 +12,7 @@ fi
 
 # Checking if OS is Debian.
 
-if [ -z "$(uname -a | grep Debian)" ]; then
+if [ -z "$(cat /proc/version | grep Debian)" ]; then
                 echo
                 echo "This script is ONLY meant for Debian!"
                 echo "This is not Debian!"
@@ -239,7 +239,7 @@ echo "43 - RPC v3.6"
 echo "44 - Rutracker Check v3.6"
 echo "45 - Noty v3.6"
 echo "46 - Task v3.6"
-echo "47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent/3.6/files"
+echo "47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent"
 echo
 echo "0 - Exit plugin installation."
 echo
@@ -288,6 +288,7 @@ case $plugin in
 	desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS.\nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
+	apt-get -y install curl
 	;;
 
 	5)
@@ -369,6 +370,7 @@ case $plugin in
 	desc="http://code.google.com/p/rutorrent/wiki/PluginGeoIP"
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
+	apt-get install php5-geoip
 	;;
 
 	14)
@@ -612,6 +614,12 @@ case $plugin in
 	desc="This plugin is intended to display media file information."
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
+	wget -P /tmp/ http://downloads.sourceforge.net/zenlib/libzen0_0.4.26-1_amd64.Debian_6.0.deb && dpkg -i /tmp/libzen0_0.4.26-1_amd64.Debian_6.0.deb
+	wget -P /tmp/ http://downloads.sourceforge.net/mediainfo/libmediainfo0_0.7.58-1_amd64.Debian_6.0.deb && dpkg -i /tmp/libmediainfo0_0.7.58-1_amd64.Debian_6.0.deb
+	wget -P /tmp/ http://downloads.sourceforge.net/mediainfo/mediainfo_0.7.58-1_amd64.Debian_6.0.deb && dpkg -i /tmp/mediainfo_0.7.58-1_amd64.Debian_6.0.deb
+	wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+	tar -zxvf _task-3.6.tar.gz -C $plugindir
+	rm _task-3.6.tar.gz
 	;;
 		
 	41)
@@ -630,6 +638,10 @@ case $plugin in
 	desc="This plugin is intended to show screenshots from video files. Needs the package 'ffmpeg' to work."
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
+	apt-get -y install ffmpeg
+	wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+	tar -zxvf _task-3.6.tar.gz -C $plugindir
+	rm _task-3.6.tar.gz
 	;;
 
 	43)
@@ -672,9 +684,13 @@ case $plugin in
 	name="Plugins v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 	file="plugins-3.6.tar.gz"
-	desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent/3.6/files "
+	desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent "
 	unpack="tar -zxvf $file -C /var/www/rutorrent/"
 	fu_download
+	apt-get -y install php5-geoip ffmpeg curl
+	wget http://downloads.sourceforge.net/zenlib/libzen0_0.4.26-1_amd64.Debian_6.0.deb && dpkg -i libzen0_0.4.26-1_amd64.Debian_6.0.deb
+	wget http://downloads.sourceforge.net/mediainfo/libmediainfo0_0.7.58-1_amd64.Debian_6.0.deb && dpkg -i libmediainfo0_0.7.58-1_amd64.Debian_6.0.deb
+	wget http://downloads.sourceforge.net/mediainfo/mediainfo_0.7.58-1_amd64.Debian_6.0.deb && dpkg -i mediainfo_0.7.58-1_amd64.Debian_6.0.deb
 	;;
 	
 	0)
