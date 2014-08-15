@@ -12,7 +12,9 @@ given username's screen session. Use "service rtorrent-init start" and
 
 Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
-**Installation**
+**Installation** 
+ 
+Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0 
 
 Download the script. 
 
