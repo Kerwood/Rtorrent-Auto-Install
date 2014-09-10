@@ -1,7 +1,9 @@
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
 
-http://LinuxBloggen.dk/
-
+http://LinuxBloggen.dk/ 
+ 
+This script ONLY works on Debian. Not Ubuntu or any of the Ubuntu forks. 
+ 
 This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
 In the installation process you have to choose a system user to run rtorrent.
