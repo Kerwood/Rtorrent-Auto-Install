@@ -109,8 +109,8 @@ Installs rutorrent-3.5 from official site.
 - 46 - Task 
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent
 
-**Version 2.1.0** 
-Made some security updates and updated rtorrent + libtorrent to newest stable version.
+**Version 2.1.0**  
+Made some security updates and updated rtorrent + libtorrent to newest stable version. 
 
 **Version 2.0.4**  
 Fixed the OS check, so now it should be working as intended. 
