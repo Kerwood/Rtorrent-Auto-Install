@@ -673,7 +673,7 @@ case $plugin in
 	name="Plugins v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 	file="plugins-3.6.tar.gz"
-	desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent "
+	desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK!"
 	unpack="tar -zxvf $file -C /var/www/rutorrent/"
 	fu_download
 	apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo
