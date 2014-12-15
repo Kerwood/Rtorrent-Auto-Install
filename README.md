@@ -35,7 +35,7 @@ Run the script.
 If the login box does not appear, it is properly because you have installed the all-plugins-pack or manually installed either `httprpc` and/or 'rpc' plugins.
 If one of these plugins are installed (they both are in the plugins pack), you can either remove them or manually make a .htaccess file in `/var/www/rutorrent`.
 
-        sudo rm -rv /var/www/rutorrent/plugins/{httprpc,rpc}
+	sudo rm -rv /var/www/rutorrent/plugins/{httprpc,rpc}
 
 **Installs**
 
