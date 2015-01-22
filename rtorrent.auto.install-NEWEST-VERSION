@@ -694,7 +694,7 @@ chmod -R 775 /var/www/rutorrent
 
 if [ ! -f /etc/apache2/sites-available/rutorrent ]; then
 
-	cat > /etc/apache2/sites-available/rutorrent << EOF
+cat > /etc/apache2/sites-available/rutorrent << EOF
 <VirtualHost *:80>
 
 	ServerName *
