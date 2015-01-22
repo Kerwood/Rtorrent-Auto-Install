@@ -10,15 +10,14 @@ if [ "$(id -u)" != "0" ]; then
 	exit 1
 fi
 
-
-# Licens
+# License
 
 echo "  ----------------------------------------------------------------------------
   "THE BEER-WARE LICENSE" (Revision 42):
   <patrick@kerwood.dk> wrote this script. As long as you retain this notice you
   can do whatever you want with this stuff. If we meet some day, and you think
-  this stuff is worth it, you can buy me a beer in return. 
-  
+  this stuff is worth it, you can buy me a beer in return.
+
      - Patrick Kerwood @ LinuxBloggen.dk
   ----------------------------------------------------------------------------"
 echo
@@ -34,25 +33,24 @@ echo
 
 con=0
 while [ $con -eq 0 ]; do
+	echo -n "Please type a valid system user: "
+	read -e user
+	uid=$(cat /etc/passwd | grep "$user": | cut -d: -f3)
 
-        echo -n "Please type a valid system user: "
-        read -e user
-        uid=$(cat /etc/passwd | grep "$user": | cut -d: -f3)
+	if [ -z $(cat /etc/passwd | grep "$user":) ]; then
+		echo
+		echo "This user does not exist!"
 
-        if [ -z $(cat /etc/passwd | grep "$user":) ]; then
-                echo
-                echo "This user does not exist!"
+	elif [ $uid -lt 999 ]; then
+		echo
+		echo "That user's UID is too low!"
 
-        elif [ $uid -lt 999 ]; then
-                echo
-                echo "That user's UID is too low!"
-
-        elif [ $user == nobody ]; then
-                echo
-                echo "You cant use 'nobody' as user!"
-        else
-                con=1
-        fi
+	elif [ $user == nobody ]; then
+		echo
+		echo "You cant use 'nobody' as user!"
+	else
+		con=1
+	fi
 done
 
 homedir=$(cat /etc/passwd | grep "$user": | cut -d: -f6)
@@ -71,7 +69,6 @@ make
 make install
 cd ..
 rm -rv xmlrpc-c
-
 
 mkdir rtorrent
 cd rtorrent
@@ -125,14 +122,13 @@ wget -O $homedir/.rtorrent.rc https://raw.github.com/Kerwood/rtorrent.auto.insta
 
 chown "$user"."$user" $homedir/.rtorrent.rc
 
-sed -i "s@HOMEDIRHERE@$homedir@g" $homedir/.rtorrent.rc 
+sed -i "s@HOMEDIRHERE@$homedir@g" $homedir/.rtorrent.rc
 
 
 # Creating symlink for scgi.load
 
 if [ ! -h /etc/apache2/mods-enabled/scgi.load ]; then
-
-        ln -s /etc/apache2/mods-available/scgi.load /etc/apache2/mods-enabled/scgi.load
+	ln -s /etc/apache2/mods-available/scgi.load /etc/apache2/mods-enabled/scgi.load
 fi
 
 # Installing rutorrent.
@@ -147,24 +143,23 @@ fi
 mv -f rutorrent /var/www/
 rm -v rutorrent-3.6.tar.gz
 
+# Installing Plugins.
+
 plugindir="/var/www/rutorrent/plugins/"
 
 # Function for the Plugins download part.
 
 function fu_download {
-
 	echo
 	echo -e "$desc"
 	echo
 	read -p "Install '$name'. [y/n]: " -n 1
 
 	if [[ $REPLY =~ [Yy]$ ]]; then
-
 		echo
 		wget "$url"
 		$unpack
 		if [ $? -eq "0" ]; then
-
 			rm "$file"
 			echo
 			error1="\033[0;32;148m'$name' downloaded, unpacked and moved to plugins folder\033[39m"
@@ -175,7 +170,6 @@ function fu_download {
 	fi
 	echo
 }
-
 
 while true
 do
@@ -541,7 +535,7 @@ case $plugin in
 	unpack="unzip $file -d $plugindir"
 	fu_download
 	;;
-	
+
 	34)
 	name="File Drop v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/filedrop-3.6.tar.gz"
@@ -550,7 +544,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	35)
 	name="Check Port v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/check_port-3.6.tar.gz"
@@ -559,7 +553,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	36)
 	name="History v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/history-3.6.tar.gz"
@@ -568,7 +562,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	37)
 	name="iPad Plugin v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/ipad-3.6.tar.gz"
@@ -577,7 +571,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	38)
 	name="Extended Ratio v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/extratio-3.6.tar.gz"
@@ -586,7 +580,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	39)
 	name="Feeds v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/feeds-3.6.tar.gz"
@@ -595,7 +589,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	40)
 	name="Media Information v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/mediainfo-3.6.tar.gz"
@@ -608,7 +602,7 @@ case $plugin in
 	tar -zxvf _task-3.6.tar.gz -C $plugindir
 	rm _task-3.6.tar.gz
 	;;
-		
+
 	41)
 	name="RSS URL Rewrite v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/rssurlrewrite-3.6.tar.gz"
@@ -617,7 +611,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	42)
 	name="Screenshot v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins/screenshots-3.6.tar.gz"
@@ -666,7 +660,7 @@ case $plugin in
 	unpack="tar -zxvf $file -C $plugindir"
 	fu_download
 	;;
-		
+
 	47)
 	name="Plugins v3.6"
 	url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
@@ -676,7 +670,7 @@ case $plugin in
 	fu_download
 	apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo
 	;;
-	
+
 	0)
 	break
 	;;
@@ -700,28 +694,30 @@ chmod -R 775 /var/www/rutorrent
 
 if [ ! -f /etc/apache2/sites-available/rutorrent ]; then
 
-echo '<VirtualHost *:80>
+	cat > /etc/apache2/sites-available/rutorrent << EOF
+<VirtualHost *:80>
 
 	ServerName *
 	ServerAlias *
 
-        DocumentRoot /var/www/
+	DocumentRoot /var/www/
 
-        CustomLog /var/log/apache2/rutorrent.log vhost_combined
+	CustomLog /var/log/apache2/rutorrent.log vhost_combined
 
-        ErrorLog /var/log/apache2/rutorrent_error.log
+	ErrorLog /var/log/apache2/rutorrent_error.log
 
-        SCGIMount /RPC2 127.0.0.1:5000
-        <location /RPC2>
-                AuthName "Tits or GTFO"
-                AuthType Basic
-                Require Valid-User
-                AuthUserFile /var/www/rutorrent/.htpasswd
-        </location>
-</VirtualHost>' > /etc/apache2/sites-available/rutorrent
+	SCGIMount /RPC2 127.0.0.1:5000
 
-a2ensite rutorrent
+	<location /RPC2>
+		AuthName "Tits or GTFO"
+		AuthType Basic
+		Require Valid-User
+		AuthUserFile /var/www/rutorrent/.htpasswd
+	</location>
+</VirtualHost>
+EOF
 
+	a2ensite rutorrent
 fi
 
 # Creating user for webinterface.
@@ -730,7 +726,6 @@ echo -n "Please type the username for the webinterface, system user not required
 read -e htauser
 
 while true; do
-
 	htpasswd -c /var/www/rutorrent/.htpasswd "$htauser"
 	if [ $? = 0 ]; then
 		break
@@ -756,16 +751,16 @@ service rtorrent-init start
 
 echo -e "\033[0;32;148m Done..\033[39m"
 echo
-echo -e "\033[1;34;148mYour downloads is put in the 'Downloads' folder, sessions data in '.rtorrent-session' and 
+echo -e "\033[1;34;148mYour downloads is put in the 'Downloads' folder, sessions data in '.rtorrent-session' and
 rtorrent's configuration file is '.rtorrent.rc', all in your home directory.\033[39m"
 echo
-echo -e "\033[1;34;148mIf you want to change configuration for rtorrent, such as download folder, port, etc., 
+echo -e "\033[1;34;148mIf you want to change configuration for rtorrent, such as download folder, port, etc.,
 you will need to edit the '.rtorrent.rc' file. E.g. 'nano $homedir/.rtorrent.rc'\033[39m"
 tput sgr0
 echo
 
 if [ -z "$(ip addr | grep eth0)" ]; then
-	echo "Visit rutorrent at http://IP.ADDRESS/rutorrent" 
+	echo "Visit rutorrent at http://IP.ADDRESS/rutorrent"
 else
 	ip=$(ip addr | grep eth0 | grep inet | awk '{print $2}' | cut -d/ -f1)
 	echo "Visit rutorrent at http://$ip/rutorrent"
