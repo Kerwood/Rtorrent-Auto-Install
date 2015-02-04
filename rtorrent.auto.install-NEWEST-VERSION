@@ -684,11 +684,16 @@ esac
 
 done
 
-# Changeing permissions for rutorrent and plugins.
+# Changing permissions for rutorrent and plugins.
 
 chown -R www-data.www-data /var/www/rutorrent
 chmod -R 775 /var/www/rutorrent
 
+# Check if apache2 has port 80 enabled
+
+if ! grep --quiet "^Listen 80$" /etc/apache2/ports.conf; then
+	echo "Listen 80" >> /etc/apache2/ports.conf;
+fi
 
 # Creating Apache virtual host
 
