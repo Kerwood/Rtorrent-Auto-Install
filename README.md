@@ -2,7 +2,7 @@
 
 http://LinuxBloggen.dk/ 
  
-This script ONLY works on Debian. Not Ubuntu or any of the Ubuntu forks. 
+This script ONLY works on Debian Wheezy. Not Ubuntu or any of the Ubuntu forks. 
  
 This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
 
@@ -61,9 +61,9 @@ This scripts installs the following packages with APT.
 	unrar-free
 	unzip
 
-The script compiles and installs xmlrpc-c from svn.  
-Installs rtorrent-0.9.3 and libtorrent-0.13.2, from github.  
-Installs rutorrent-3.5 from official site.
+The script compiles and installs lastest xmlrpc-c from svn.  
+Installs rtorrent-0.9.4 and libtorrent-0.13.4, from github.  
+Installs rutorrent-3.6 from official site.
 
 **Plugin List**
 
