@@ -764,11 +764,13 @@ you will need to edit the '.rtorrent.rc' file. E.g. 'nano $homedir/.rtorrent.rc'
 tput sgr0
 echo
 
-if [ -z "$(ip addr | grep eth0)" ]; then
-	echo "Visit rutorrent at http://IP.ADDRESS/rutorrent"
-else
-	ip=$(ip addr | grep eth0 | grep inet | awk '{print $2}' | cut -d/ -f1)
+# Ipv4 only.
+# grep 'inet6' instead of 'inet ' for ipv6
+ip=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
+if [ $ip ]; then
 	echo "Visit rutorrent at http://$ip/rutorrent"
+else
+	echo "Visit rutorrent at http://IP.ADDRESS/rutorrent"
 fi
 echo
 echo -e "\033[0;32;148mPatrick Kerwood - http://LinuxBloggen.dk\033[39m"
