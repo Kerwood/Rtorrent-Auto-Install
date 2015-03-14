@@ -725,7 +725,7 @@ cat > /etc/apache2/sites-available/rutorrent.conf << EOF
 		AuthType Basic
 		Require valid-user
 		AuthUserFile /var/www/html/rutorrent/.htpasswd
-	</Locationy>
+	</Location>
 </VirtualHost>
 EOF
 
