@@ -2,9 +2,10 @@
 
 http://LinuxBloggen.dk/ 
  
-This script ONLY works on Debian Wheezy. Not Ubuntu or any of the Ubuntu forks. 
  
-This is a Bash script i wrote to ease the installtion of rtorrent + rutorrent.
+This is a Bash script to ease the installtion of rtorrent, rutorrent + plugins.
+
+The Ubuntu 14.04 script was forked by Frantz @ [Wiity.net](http://Wiity.net), who made it run on Ubuntu, so a big thank you to him.
 
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing 43 plugins/addons. See list further down.
@@ -12,7 +13,6 @@ The script add a init script that makes rtorrent start, at a possible reboot, in
 given username's screen session. Use "service rtorrent-init start" and 
 "service rtorrent-init stop" to start and stop rtorrent.
 
-Use rtorrent.auto.install-NEWEST-VERSION for guides or tutorials, as it will allways be the newest version.
 
 **Installation** 
  
@@ -115,44 +115,4 @@ Installs rutorrent-3.6 from official site.
 - 46 - Task 
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent
 
-**Version 2.1.0**  
-Made some security updates and updated rtorrent + libtorrent to newest stable version. 
-
-**Version 2.0.4**  
-Fixed the OS check, so now it should be working as intended. 
-All plugin dependencies are now installed.
-
-**Version 2.0.2**  
-Script is updated so that it only downloads and installs 
-rtorrent v. 0.9.3, which is the current version that rutorrent supports.
-
-**Version 2.0.1**  
-Added apache2-utils to the package managers install list.
-
-**Version 2.0.0**  
-The script now uses an init script to startup rtorrent at boot, instead of the crontab work around.
-Use "service rtorrent-init start" and "service rtorrent-init stop" to start and stop rtorrent.
-
-
-**Version 1.0.6**
-
-- Script now downloads newest version og libtorrent and rtorrent, via github. Current version: rtorrent 0.9.3
-- Updated to download Rutorrent 3.6
-- Updated all plugins
-- Added more plugins
-
-**Version 1.0.5**  
-BUGFIX - Directory path for "All plugins" plugin.
-
-**Version 1.0.4**
-
-- 10 new plugins added to list.
-- All plugins updatet to newest version.
-
-
-**Version 1.0.3**
-
-- Added unzip and unrar-free to the installation list.
-- Updated "Logoff" plugin to 1.3
-- Add right permissions to rutorrent folder.
 
