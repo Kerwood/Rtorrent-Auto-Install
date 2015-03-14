@@ -14,7 +14,8 @@ given username's screen session. Use "service rtorrent-init start" and
 "service rtorrent-init stop" to start and stop rtorrent.
 
 
-**Installation** 
+Installation
+------------
  
 Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0 
 
@@ -30,14 +31,16 @@ Run the script.
 
 	sudo ./rtorrent.auto.install-X.X.X-Debian-Wheezy
 
-**Login box does not appear after install!!**  
+Login box does not appear after install!!
+-----------------------------------------
 
 If the login box does not appear, it is properly because you have installed the all-plugins-pack or manually installed either `httprpc` and/or `rpc` plugins.
 If one of these plugins are installed (they both are in the plugins pack), you can either remove them or manually make a .htaccess file in `/var/www/rutorrent`.
 
 	sudo rm -rv /var/www/rutorrent/plugins/{httprpc,rpc}
 
-**Installs**
+Installs
+--------
 
 This scripts installs the following packages with APT.
 
