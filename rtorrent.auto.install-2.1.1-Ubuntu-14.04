@@ -357,6 +357,7 @@ case $plugin in
 	mkdir -v /usr/share/GeoIP
 	gunzip GeoLiteCity.dat.gz
 	mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+	rm GeoLiteCity.dat.gz
 	apt-get install php5-geoip
 	;;
 
