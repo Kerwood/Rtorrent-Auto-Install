@@ -3,7 +3,7 @@
 http://LinuxBloggen.dk/ 
  
  
-This is a Bash script to ease the installtion of rtorrent, rutorrent + plugins.
+This is a Bash script to ease the installation of rtorrent, rutorrent + plugins.
 
 The Ubuntu 14.04 script was forked by Frantz @ [Wiity.net](http://Wiity.net), who made it run on Ubuntu, so a big thank you to him.
 
