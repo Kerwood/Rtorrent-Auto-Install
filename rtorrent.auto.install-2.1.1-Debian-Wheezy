@@ -695,6 +695,12 @@ if ! grep --quiet "^Listen 80$" /etc/apache2/ports.conf; then
 	echo "Listen 80" >> /etc/apache2/ports.conf;
 fi
 
+# Adding ServerName localhost to apache2.conf to make the authentication work
+
+if ! grep --quiet "^ServerName$" /etc/apache2/apache2.conf; then
+	echo "ServerName localhost" >> /etc/apache2/apache2.conf;
+fi
+
 # Creating Apache virtual host
 
 if [ ! -f /etc/apache2/sites-available/rutorrent ]; then
