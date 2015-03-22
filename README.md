@@ -19,7 +19,7 @@ Installation
  
 Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0 
 
-Download the script. 
+Download the script. Remeber to change the X.X.X to the actual version numbers.
 
 	wget https://raw.github.com/Kerwood/rtorrent.auto.install/master/rtorrent.auto.install-X.X.X-Debian-Wheezy
 
