@@ -61,11 +61,11 @@ function APACHE-UTILS {
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			echo
 			apt-get -y install apache2-utils
-			clear 
+			clear
 		else
 			clear
 			exit
-		fi	
+		fi
 	fi
 }
 
@@ -119,23 +119,26 @@ function SET_RTORRENT_USER {
 
 # Function to  create users for the webinterface.
 function SET_WEB_USER {
-
-	echo -n "Please type the username for the webinterface, system user not required: "
-	read WEB_USER
 	while true; do
-		USER=$(htpasswd -n $WEB_USER)
+		echo -n "Please type the username for the webinterface, system user not required: "
+		read WEB_USER
+		USER=$(htpasswd -n $WEB_USER 2>/dev/null)
 		if [ $? = 0 ]; then
 			WEB_USER_ARRAY+=($USER)
 			break
+		else
+			echo
+			echo "${RED}Something went wrong! Either you entered an unusable username or not identical passwords.${NORMAL}"
+			echo
 		fi
 	done
 }
 
 # Function to list WebUI users in the menu
-function LIST_WEB_USERS {	
+function LIST_WEB_USERS {
 	for i in ${WEB_USER_ARRAY[@]}; do
 		USER_CUT=$(echo $i | cut -d \: -f 1)
-		echo -n " $USER_CUT"		
+		echo -n " $USER_CUT"
 	done
 }
 
@@ -144,8 +147,8 @@ function LIST_PLUGINS {
 	if [ ${#PLUGIN_ARRAY[@]} -eq 0 ]; then
 		echo "     No plugins downloaded!"
 	else
-		for i in "${PLUGIN_ARRAY[@]}"; do		
-			echo "   - $i"		
+		for i in "${PLUGIN_ARRAY[@]}"; do
+			echo "   - $i"
 		done
 	fi
 }
@@ -157,7 +160,7 @@ function HEADER {
 	echo "                            Rtorrent + Rutorrent Auto Install"
 	echo "                            ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
 	echo " ${BOLD}--------------------------------------------------------------------------------------${NORMAL}"
-	echo 
+	echo
 }
 
 # Function for the Plugins download part.
@@ -794,7 +797,7 @@ function INSTALL_RUTORRENT {
 		rm -r /var/www/rutorrent
 	fi
 
-	# Changeing SCGI mount point in rutorrent config. 
+	# Changeing SCGI mount point in rutorrent config.
 	sed -i "s/\/RPC2/\/rutorrent\/RPC2/g" ./rutorrent/conf/config.php
 
 	mv -f rutorrent /var/www/
@@ -943,7 +946,7 @@ do
     read case
 
     case "$case" in
-        1) 	SET_RTORRENT_USER 
+        1) 	SET_RTORRENT_USER
 			;;
         2) 	SET_WEB_USER
 			;;
