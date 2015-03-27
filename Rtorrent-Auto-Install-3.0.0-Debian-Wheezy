@@ -834,26 +834,25 @@ function CONFIGURE_APACHE {
 	if [ ! -f /etc/apache2/sites-available/rutorrent.conf ]; then
 
 		cat > /etc/apache2/sites-available/rutorrent.conf << EOF
-		<VirtualHost *:80>
+<VirtualHost *:80>
 
-			ServerName *
-			ServerAlias *
+	ServerAlias *
 
-			DocumentRoot /var/www/
+	DocumentRoot /var/www/
 
-			CustomLog /var/log/apache2/rutorrent.log vhost_combined
+	CustomLog /var/log/apache2/rutorrent.log vhost_combined
 
-			ErrorLog /var/log/apache2/rutorrent_error.log
+	ErrorLog /var/log/apache2/rutorrent_error.log
 
-			SCGIMount /rutorrent/RPC2 127.0.0.1:5000
+	SCGIMount /rutorrent/RPC2 127.0.0.1:5000
 
-			<location /rutorrent>
-				AuthName "Tits or GTFO"
-				AuthType Basic
-				Require Valid-User
-				AuthUserFile /var/www/rutorrent/.htpasswd
-			</location>
-		</VirtualHost>
+	<location /rutorrent>
+		AuthName "Tits or GTFO"
+		AuthType Basic
+		Require Valid-User
+		AuthUserFile /var/www/rutorrent/.htpasswd
+	</location>
+</VirtualHost>
 EOF
 
 		a2ensite rutorrent.conf
@@ -881,13 +880,16 @@ function SETUP_INIT {
 
 # Function for showing the end result when install is complete.
 function INSTALL_COMPLETE {
+
+	rm -r $TEMP_PLUGIN_DIR
+
 	HEADER
 
 	echo "${GREEN}Installation is complete..${NORMAL}"
 	echo
 
-	echo "${PURPLE}Your downloads is put in the 'Downloads' folder, sessions data in '.rtorrent-session' and"
-	echo "rtorrent's configuration file is '.rtorrent.rc', all in your home directory."
+	echo "${PURPLE}Your downloads is put in the 'Downloads' folder, sessions data in '.rtorrent-session'"
+	echo "and rtorrent's configuration file is '.rtorrent.rc', all in your home directory."
 	echo
 	echo "If you want to change configuration for rtorrent, such as download folder, port, etc.,"
 	echo "you will need to edit the '.rtorrent.rc' file. E.g. 'nano $HOMEDIR/.rtorrent.rc'${NORMAL}"
@@ -901,6 +903,7 @@ function INSTALL_COMPLETE {
 	else
 		echo "Visit rutorrent at http://IP-ADDRESS/rutorrent"
 	fi
+	echo
 }
 
 
@@ -950,6 +953,7 @@ do
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
+			SETUP_INIT
 			INSTALL_COMPLETE
 			break
 			;;
