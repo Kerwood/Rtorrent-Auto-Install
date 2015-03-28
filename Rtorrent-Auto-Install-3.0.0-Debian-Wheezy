@@ -936,23 +936,23 @@ do
 	echo " ${BOLD}ruTorrent plugins:${NORMAL}"
 	LIST_PLUGINS
 	echo
-    echo " [1] - Change rTorrent user"
-    echo " [2] - Add another ruTorrent user"
-    echo " [3] - Download plugins"
-    echo
-    echo " [0] - Start installation"
-    echo
-    echo -n "${GREEN}>>${NORMAL} "
-    read case
+	echo " [1] - Change rTorrent user"
+	echo " [2] - Add another ruTorrent user"
+	echo " [3] - Download plugins"
+	echo
+	echo " [0] - Start installation"
+	echo
+	echo -n "${GREEN}>>${NORMAL} "
+	read case
 
-    case "$case" in
-        1) 	SET_RTORRENT_USER
+	case "$case" in
+		1) 	SET_RTORRENT_USER
 			;;
-        2) 	SET_WEB_USER
+		2) 	SET_WEB_USER
 			;;
-        3) 	SELECT_PLUGINS
+		3) 	SELECT_PLUGINS
 			;;
-        0)	APT-DEPENDENCIES
+		0)	APT-DEPENDENCIES
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
@@ -960,6 +960,6 @@ do
 			INSTALL_COMPLETE
 			break
 			;;
-    esac
+	esac
 done
 
