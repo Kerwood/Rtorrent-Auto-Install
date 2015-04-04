@@ -698,6 +698,7 @@ function SELECT_PLUGINS {
 			desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK!"
 			unpack="tar -zxvf $file -C /tmp/"
 			DOWNLOAD_PLUGIN
+			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
 			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo
 			;;
 
