@@ -690,7 +690,6 @@ function SELECT_PLUGINS {
 			DOWNLOAD_PLUGIN
 			;;
 
-			# NOTICE: Plugin path for "Plugins v3.6" is set static, and cannot be set with the TEMP_PLUGIN_DIR 
 			47)
 			name="Plugins v3.6"
 			url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
