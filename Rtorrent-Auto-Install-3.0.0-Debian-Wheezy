@@ -690,12 +690,13 @@ function SELECT_PLUGINS {
 			DOWNLOAD_PLUGIN
 			;;
 
+			# NOTICE: Plugin path for "Plugins v3.6" is set static, and cannot be set with the TEMP_PLUGIN_DIR 
 			47)
 			name="Plugins v3.6"
 			url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 			file="plugins-3.6.tar.gz"
 			desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK!"
-			unpack="tar -zxvf $file -C /var/www/rutorrent/"
+			unpack="tar -zxvf $file -C /tmp/"
 			DOWNLOAD_PLUGIN
 			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo
 			;;
@@ -706,7 +707,7 @@ function SELECT_PLUGINS {
 
 			*)
 			echo
-			error1="\033[1;31;148mNot a usable number..!\033[39m"
+			error1="${RED}Not a usable number..!${NORMAL}"
 			echo
 			;;
 		esac
