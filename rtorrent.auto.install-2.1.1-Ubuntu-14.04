@@ -75,7 +75,7 @@ cd rtorrent
 
 # Installing libtorrent.
 
-wget http://libtorrent.rakshasa.no/downloads/libtorrent-0.13.4.tar.gz
+wget https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -O libtorrent-0.13.4.tar.gz
 tar -zxvf libtorrent-0.13.4.tar.gz
 cd libtorrent-0.13.4
 ./autogen.sh
@@ -86,7 +86,7 @@ cd ..
 
 # Installing rtorrent.
 
-wget http://libtorrent.rakshasa.no/downloads/rtorrent-0.9.4.tar.gz
+wget https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -O rtorrent-0.9.4.tar.gz
 tar -zxvf rtorrent-0.9.4.tar.gz
 cd rtorrent-0.9.4
 ./autogen.sh
