@@ -138,7 +138,7 @@ echo "."
 restart|force-reload)
 echo -n "Restarting $DESC: $NAME"
 d_stop
-sleep 1
+sleep 5
 d_start
 echo "."
 ;;
