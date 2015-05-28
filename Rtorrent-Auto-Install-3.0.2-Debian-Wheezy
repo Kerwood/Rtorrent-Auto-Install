@@ -52,11 +52,22 @@ function CHECK_ROOT {
 
 # Checks is apache2-utils is installed. Its is needed to make the Web users.
 function APACHE-UTILS {
-	dpkg -s apache2-utils > /dev/null 2>&1
 
+	count=0
+
+	dpkg -s apache2-utils 2> /dev/null | grep "Status: install ok installed" &> /dev/null
 	if [ $? != 0 ]; then
+	        let "count++"
+	fi
+
+	dpkg -s unzip 2> /dev/null | grep "Status: install ok installed" &> /dev/null
+	if [ $? != 0 ]; then
+	        let "count++"
+	fi
+
+	if [ $count != 0 ]; then
 		echo
-		echo " The package apache2-utils is not installed and is needed for the setup."
+		echo " One or both of the packages apache2-utils and unzip is not installed and is needed for the setup."
 		read -p " Do you want to install it? [y/n]: " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			echo
