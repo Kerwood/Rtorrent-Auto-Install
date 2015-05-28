@@ -382,7 +382,7 @@ function SELECT_PLUGINS {
 			gunzip GeoLiteCity.dat.gz
 			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
 			rm GeoLiteCity.dat.gz
-			apt-get install php5-geoip
+			apt-get -y install php5-geoip
 			;;
 
 			14)
