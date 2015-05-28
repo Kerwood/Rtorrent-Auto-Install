@@ -38,7 +38,7 @@ function CHECK_ROOT {
 	fi
 }
 
-# Checks is apache2-utils is installed. Its is needed to make the Web user
+# Checks is apache2-utils and unzip is installed. Its is needed to make the Web user
 function APACHE-UTILS {
 
 	count=0
@@ -59,7 +59,7 @@ function APACHE-UTILS {
 		read -p " Do you want to install it? [y/n]: " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			echo
-			apt-get -y install apache2-utils
+			apt-get -y install apache2-utils unzip
 			clear
 		else
 			clear
