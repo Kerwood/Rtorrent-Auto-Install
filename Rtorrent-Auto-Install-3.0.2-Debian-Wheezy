@@ -1,17 +1,5 @@
 #!/bin/bash
-
-# -------------------------------------------------------------------------------
-#  THE BEER-WARE LICENSE (Revision 42):
-#  <patrick@kerwood.dk> wrote this script. As long as you retain this notice you
-#  can do whatever you want with this stuff. If we meet some day, and you think
-#  this stuff is worth it, you can buy me a beer in return.
-#
-#     - Patrick Kerwood @ LinuxBloggen.dk
-# -------------------------------------------------------------------------------
-
-
-# PLEASE DO NOT SET ANY OF THE VARIABLES, THEY WILL BE POPULATED IN THE MENU.
-
+# PLEASE DO NOT SET ANY OF THE VARIABLES, THEY WILL BE POPULATED IN THE MENU
 clear
 
 # Formatting variables
@@ -22,17 +10,17 @@ LBLUE=$(tput setaf 6)
 RED=$(tput setaf 1)
 PURPLE=$(tput setaf 5)
 
-# The system user rtorrent is going to run as.
+# The system user rtorrent is going to run as
 RTORRENT_USER=""
 
-# The user that is going to log into rutorrent (htaccess).
+# The user that is going to log into rutorrent (htaccess)
 WEB_USER=""
 
 # Array with webusers including their hashed paswords
 WEB_USER_ARRAY=()
 
 # Temporary download folder for plugins
-TEMP_PLUGIN_DIR="/tmp/rutorrentPlugns"
+TEMP_PLUGIN_DIR="/tmp/rutorrentPlugins"
 
 # Array of downloaded plugins
 PLUGIN_ARRAY=()
@@ -50,7 +38,7 @@ function CHECK_ROOT {
 	fi
 }
 
-# Checks is apache2-utils is installed. Its is needed to make the Web users.
+# Checks is apache2-utils is installed. Its is needed to make the Web user
 function APACHE-UTILS {
 
 	count=0
@@ -80,29 +68,23 @@ function APACHE-UTILS {
 	fi
 }
 
-# NOTICE: Change distro name under Licens on forks to different distros
-# Licens
+# License
 function LICENSE {
 	clear
-	echo " ${BOLD}-------------------------------------------------------------------------------"
-	echo "  THE BEER-WARE LICENSE (Revision 42):"
-	echo "  <patrick@kerwood.dk> wrote this script. As long as you retain this notice you"
-	echo "  can do whatever you want with this stuff. If we meet some day, and you think"
-	echo "  this stuff is worth it, you can buy me a beer in return."
+	echo "${BOLD}--------------------------------------------------------------------------------"
+	echo " THE BEER-WARE LICENSE (Revision 42):"
+	echo " <patrick@kerwood.dk> wrote this script. As long as you retain this notice you"
+	echo " can do whatever you want with this stuff. If we meet some day, and you think"
+	echo " this stuff is worth it, you can buy me a beer in return."
 	echo
-	echo "      - ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
-	echo " ${BOLD}-------------------------------------------------------------------------------${NORMAL}"
-	echo
-	echo
-	echo " Is the OS on this server Debian Wheezy? If not, quit or continue at own risk."
-	echo " And don't report a bug if it doesn't work."
+	echo " - ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
+	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 	echo
 	read -p " Press any key to continue..." -n 1
 	echo
-	echo
 }
 
-# Function to set the system user, rtorrent is going to run as.
+# Function to set the system user, rtorrent is going to run as
 function SET_RTORRENT_USER {
 	con=0
 	while [ $con -eq 0 ]; do
@@ -112,23 +94,20 @@ function SET_RTORRENT_USER {
 		if [ -z $(cat /etc/passwd | grep "^$RTORRENT_USER:") ]; then
 			echo
 			echo "This user does not exist!"
-
 		elif [ $(cat /etc/passwd | grep "^$RTORRENT_USER:" | cut -d: -f3) -lt 999 ]; then
 			echo
 			echo "That user's UID is too low!"
-
 		elif [ $RTORRENT_USER == nobody ]; then
 			echo
 			echo "You cant use 'nobody' as user!"
 		else
 			HOMEDIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
 			con=1
-
 		fi
 	done
 }
 
-# Function to  create users for the webinterface.
+# Function to  create users for the webinterface
 function SET_WEB_USER {
 	while true; do
 		echo -n "Please type the username for the webinterface, system user not required: "
@@ -139,7 +118,8 @@ function SET_WEB_USER {
 			break
 		else
 			echo
-			echo "${RED}Something went wrong! Either you entered an unusable username or not identical passwords.${NORMAL}"
+			echo "${RED}Something went wrong!"
+			echo "Either you entered an unusable username or not identical passwords.${NORMAL}"
 			echo
 		fi
 	done
@@ -153,7 +133,7 @@ function LIST_WEB_USERS {
 	done
 }
 
-# Function to list plugins, downloaded, in the menu.
+# Function to list plugins, downloaded, in the menu
 function LIST_PLUGINS {
 	if [ ${#PLUGIN_ARRAY[@]} -eq 0 ]; then
 		echo "     No plugins downloaded!"
@@ -167,10 +147,10 @@ function LIST_PLUGINS {
 # Header for the menu
 function HEADER {
 	clear
-	echo " ${BOLD}--------------------------------------------------------------------------------------"
-	echo "                            Rtorrent + Rutorrent Auto Install"
-	echo "                            ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
-	echo " ${BOLD}--------------------------------------------------------------------------------------${NORMAL}"
+	echo "${BOLD}--------------------------------------------------------------------------------"
+	echo "                       Rtorrent + Rutorrent Auto Install"
+	echo "                       ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
+	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 	echo
 }
 
@@ -199,7 +179,6 @@ function DOWNLOAD_PLUGIN {
 }
 
 function SELECT_PLUGINS {
-
 	if [ ! -d $TEMP_PLUGIN_DIR ]; then
 		mkdir $TEMP_PLUGIN_DIR
 	fi
@@ -209,42 +188,42 @@ function SELECT_PLUGINS {
 	while true
 	do
 		echo
-		echo "${GREEN}--------------------------------------------------------------------------------------------------${NORMAL}"
+		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
 		echo
-		echo "1 - Erase Data Plugin."
-		echo "2 - Create Plugin v3.6"
-		echo "3 - Trafic Plugin v3.6"
-		echo "4 - RSS Plugin v3.6"
-		echo "5 - Edit Plugin v3.6"
-		echo "6 - Retrackers Plugin v3.6"
-		echo "7 - Throttle Plugin v3.6"
-		echo "8 - Cookies Plugin v3.6"
-		echo "9 - Scheduler Plugin v3.6"
-		echo "10 - Auto Tools Plugin v3.6"
-		echo "11 - Data Dir Plugin v3.6"
-		echo "12 - Track Lables Plugin v3.6"
-		echo "13 - Geo IP Plugin v3.6"
-		echo "14 - Ratio Plugin v3.6"
-		echo "15 - Show Peers like wTorrent Plugin v3.6"
-		echo "16 - Seeding Time Plugin v3.6"
-		echo "17 - HTTPRPC Plugin v3.6"
-		echo "18 - Diskspace Plugin v3.6"
-		echo "19 - Unpack Plugin v3.6"
-		echo "20 - Get Dir Plugin v3.6"
-		echo "21 - Source Plugin v3.6"
-		echo "22 - Chunks Plugin v3.6"
-		echo "23 - Data Plugin v3.6"
-		echo "24 - CPU Load Plugin v3.6"
-		echo "25 - Extsearch Plugin v3.6"
-		echo "26 - Theme Plugin v3.6"
-		echo "27 - Login Mgr Plugin v3.6"
+		echo "1 - Erase Data"
+		echo "2 - Create v3.6"
+		echo "3 - Traffic v3.6"
+		echo "4 - RSS v3.6"
+		echo "5 - Edit v3.6"
+		echo "6 - Retrackers v3.6"
+		echo "7 - Throttle v3.6"
+		echo "8 - Cookies v3.6"
+		echo "9 - Scheduler v3.6"
+		echo "10 - Auto Tools v3.6"
+		echo "11 - Data Dir v3.6"
+		echo "12 - Track Lables v3.6"
+		echo "13 - Geo IP v3.6"
+		echo "14 - Ratio v3.6"
+		echo "15 - Show Peers like wTorrent v3.6"
+		echo "16 - Seeding Time v3.6"
+		echo "17 - HTTPRPC v3.6"
+		echo "18 - Diskspace v3.6"
+		echo "19 - Unpack v3.6"
+		echo "20 - Get Dir v3.6"
+		echo "21 - Source v3.6"
+		echo "22 - Chunks v3.6"
+		echo "23 - Data v3.6"
+		echo "24 - CPU Load v3.6"
+		echo "25 - Extsearch v3.6"
+		echo "26 - Theme v3.6"
+		echo "27 - Login Mgr v3.6"
 		echo "28 - ruTorrent Label Management Suite v1.1"
-		echo "29 - NFO Plugin"
-		echo "30 - Chat Plugin v2.0"
-		echo "31 - Logoff Plugin v1.3"
-		echo "32 - Pause Plugin v1.2"
-		echo "33 - Instant Search Plugin v1.0"
-		echo "34 - File Drop v3.6 (FF > 3.6 & Chrome only)."
+		echo "29 - NFO"
+		echo "30 - Chat v2.0"
+		echo "31 - Logoff v1.3"
+		echo "32 - Pause v1.2"
+		echo "33 - Instant Search v1.0"
+		echo "34 - File Drop v3.6 (FF > 3.6 & Chrome only)"
 		echo "35 - Check Port v3.6"
 		echo "36 - History v3.6"
 		echo "37 - iPad v3.6"
@@ -257,11 +236,11 @@ function SELECT_PLUGINS {
 		echo "44 - Rutracker Check v3.6"
 		echo "45 - Noty v3.6"
 		echo "46 - Task v3.6"
-		echo "47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent"
+		echo "47 - All Plugins v3.6. More at https://github.com/Novik/ruTorrent/wiki/Plugins"
 		echo
-		echo "0 - Exit plugin installation."
+		echo "0 - Exit plugin installation"
 		echo
-		echo "${GREEN}--------------------------------------------------------------------------------------------------${NORMAL}"
+		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
 		echo
 		echo -e $error1
 		unset error1
@@ -705,7 +684,7 @@ function SELECT_PLUGINS {
 			name="Plugins v3.6"
 			url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 			file="plugins-3.6.tar.gz"
-			desc="This plugin installs about 40 plugins. Download the plugin manually to see which plugins are included. \nhttps://bintray.com/novik65/generic/ruTorrent \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK!"
+			desc="This plugin installs about 40+ plugins. \nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!"
 			unpack="tar -zxvf $file -C /tmp/"
 			DOWNLOAD_PLUGIN
 			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
@@ -728,13 +707,12 @@ function SELECT_PLUGINS {
 # Function for installing dependencies
 function APT-DEPENDENCIES {
 	apt-get update
-	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unrar-free unzip
+	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unrar-free unzip libssl-dev
 }
 
 # Function for setting up xmlrpc, libtorrent and rtorrent
 function INSTALL_RTORRENT {
 	# Installing xmlrpc-c
-
 	svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc-c
 	cd xmlrpc-c
 	./configure --disable-cplusplus
@@ -746,8 +724,7 @@ function INSTALL_RTORRENT {
 	mkdir rtorrent
 	cd rtorrent
 
-	# Installing libtorrent.
-
+	# Installing libtorrent
 	wget https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -O libtorrent-0.13.4.tar.gz
 	tar -zxvf libtorrent-0.13.4.tar.gz
 	cd libtorrent-0.13.4
@@ -757,8 +734,7 @@ function INSTALL_RTORRENT {
 	make install
 	cd ..
 
-	# Installing rtorrent.
-
+	# Installing rtorrent
 	wget https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -O rtorrent-0.9.4.tar.gz
 	tar -zxvf rtorrent-0.9.4.tar.gz
 	cd rtorrent-0.9.4
@@ -772,7 +748,6 @@ function INSTALL_RTORRENT {
 	ldconfig
 
 	# Creating session directory
-
 	if [ ! -d "$HOMEDIR"/.rtorrent-session ]; then
 		mkdir "$HOMEDIR"/.rtorrent-session
 		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/.rtorrent-session
@@ -781,7 +756,6 @@ function INSTALL_RTORRENT {
 	fi
 
 	# Creating downloads folder
-
 	if [ ! -d "$HOMEDIR"/Downloads ]; then
 		mkdir "$HOMEDIR"/Downloads
 		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/Downloads
@@ -790,7 +764,6 @@ function INSTALL_RTORRENT {
 	fi
 
 	# Downloading rtorrent.rc file.
-
 	wget -O $HOMEDIR/.rtorrent.rc https://raw.github.com/Kerwood/rtorrent.auto.install/master/Files/rtorrent.rc
 
 	chown "$RTORRENT_USER"."$RTORRENT_USER" $HOMEDIR/.rtorrent.rc
@@ -801,7 +774,6 @@ function INSTALL_RTORRENT {
 # Function for installing rutorrent and plugins
 function INSTALL_RUTORRENT {
 	# Installing rutorrent.
-
 	wget http://dl.bintray.com/novik65/generic/rutorrent-3.6.tar.gz
 	tar -zxvf rutorrent-3.6.tar.gz
 
@@ -817,9 +789,7 @@ function INSTALL_RUTORRENT {
 
 	mv -fv "$TEMP_PLUGIN_DIR"/* /var/www/rutorrent/plugins
 
-
 	# Changing permissions for rutorrent and plugins.
-
 	chown -R www-data.www-data /var/www/rutorrent
 	chmod -R 775 /var/www/rutorrent
 }
@@ -827,53 +797,43 @@ function INSTALL_RUTORRENT {
 # Function for configuring apache
 function CONFIGURE_APACHE {
 	# Creating symlink for scgi.load
-
 	if [ ! -h /etc/apache2/mods-enabled/scgi.load ]; then
 		ln -s /etc/apache2/mods-available/scgi.load /etc/apache2/mods-enabled/scgi.load
 	fi
 
 	# Check if apache2 has port 80 enabled
-
 	if ! grep --quiet "^Listen 80$" /etc/apache2/ports.conf; then
 		echo "Listen 80" >> /etc/apache2/ports.conf;
 	fi
 
 	# Adding ServerName localhost to apache2.conf
-
 	if ! grep --quiet "^ServerName$" /etc/apache2/apache2.conf; then
 		echo "ServerName localhost" >> /etc/apache2/apache2.conf;
 	fi
 
 	# Creating Apache virtual host
-
 	if [ ! -f /etc/apache2/sites-available/rutorrent.conf ]; then
 
 		cat > /etc/apache2/sites-available/rutorrent.conf << EOF
 <VirtualHost *:80>
-
 	ServerAlias *
-
 	DocumentRoot /var/www/
-
 	CustomLog /var/log/apache2/rutorrent.log vhost_combined
-
 	ErrorLog /var/log/apache2/rutorrent_error.log
-
 	SCGIMount /rutorrent/RPC2 127.0.0.1:5000
 
-	<location /rutorrent>
+	<Directory "/var/www/rutorrent">
 		AuthName "Tits or GTFO"
 		AuthType Basic
-		Require Valid-User
+		Require valid-user
 		AuthUserFile /var/www/rutorrent/.htpasswd
-	</location>
+	</Directory>
 </VirtualHost>
 EOF
 
 		a2ensite rutorrent.conf
 		service apache2 restart
 	fi
-
 
 	# Creating .htaccess file
 	printf "%s\n" "${WEB_USER_ARRAY[@]}" > /var/www/rutorrent/.htpasswd
@@ -895,14 +855,12 @@ function SETUP_INIT {
 
 # Function for showing the end result when install is complete.
 function INSTALL_COMPLETE {
-
 	rm -r $TEMP_PLUGIN_DIR
 
 	HEADER
 
 	echo "${GREEN}Installation is complete..${NORMAL}"
 	echo
-
 	echo "${PURPLE}Your downloads is put in the 'Downloads' folder, sessions data in '.rtorrent-session'"
 	echo "and rtorrent's configuration file is '.rtorrent.rc', all in your home directory."
 	echo
@@ -921,7 +879,6 @@ function INSTALL_COMPLETE {
 	echo
 }
 
-
 CHECK_ROOT
 LICENSE
 APACHE-UTILS
@@ -930,25 +887,24 @@ HEADER
 SET_RTORRENT_USER
 SET_WEB_USER
 
-# NOTICE: Change lib, r, ru-torrent versions on upgrades.
-
+# NOTICE: Change lib, rtorrent, rutorrent versions on upgrades.
 while true
 do
 	HEADER
-	echo " ${BOLD}rTorrent version:${NORMAL} 0.9.4"
-	echo " ${BOLD}libTorrent version:${NORMAL} 0.13.4"
-	echo " ${BOLD}ruTorrent version:${NORMAL} 3.6"
+	echo " ${BOLD}rTorrent version:${NORMAL} ${RED}0.9.4${NORMAL}"
+	echo " ${BOLD}libTorrent version:${NORMAL} ${RED}0.13.4${NORMAL}"
+	echo " ${BOLD}ruTorrent version:${NORMAL} ${RED}3.6${NORMAL}"
 	echo
-	echo " ${BOLD}rTorrent user:${NORMAL} $RTORRENT_USER"
+	echo " ${BOLD}rTorrent user:${NORMAL}${GREEN} $RTORRENT_USER${NORMAL}"
 	echo
-	echo -n " ${BOLD}ruTorrent user(s):${NORMAL}"
+	echo -n " ${BOLD}ruTorrent user(s):${NORMAL}${GREEN}"
 	LIST_WEB_USERS
 	echo
 	echo
-	echo " ${BOLD}ruTorrent plugins:${NORMAL}"
+	echo " ${NORMAL}${BOLD}ruTorrent plugins:${NORMAL}${GREEN}"
 	LIST_PLUGINS
 	echo
-	echo " [1] - Change rTorrent user"
+	echo " ${NORMAL}[1] - Change rTorrent user"
 	echo " [2] - Add another ruTorrent user"
 	echo " [3] - Download plugins"
 	echo
@@ -974,4 +930,3 @@ do
 			;;
 	esac
 done
-
