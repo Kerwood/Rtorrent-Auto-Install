@@ -427,6 +427,7 @@ function SELECT_PLUGINS {
 			desc="This plugin is designed to manually or automatically unrar/unzip torrent data.\nhttp://code.google.com/p/rutorrent/wiki/PluginUnpack"
 			unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 			DOWNLOAD_PLUGIN
+			apt-get -y install unrar-free
 			;;
 
 			20)
@@ -688,7 +689,7 @@ function SELECT_PLUGINS {
 			unpack="tar -zxvf $file -C /tmp/"
 			DOWNLOAD_PLUGIN
 			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
-			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo
+			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo unrar-free
 			;;
 
 			0)
@@ -707,7 +708,7 @@ function SELECT_PLUGINS {
 # Function for installing dependencies
 function APT-DEPENDENCIES {
 	apt-get update
-	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unrar-free unzip libssl-dev
+	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unzip libssl-dev
 }
 
 # Function for setting up xmlrpc, libtorrent and rtorrent
