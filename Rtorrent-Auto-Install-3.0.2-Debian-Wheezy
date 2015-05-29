@@ -427,7 +427,7 @@ function SELECT_PLUGINS {
 			desc="This plugin is designed to manually or automatically unrar/unzip torrent data.\nhttp://code.google.com/p/rutorrent/wiki/PluginUnpack"
 			unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 			DOWNLOAD_PLUGIN
-			apt-get install -y unrar-free
+			apt-get -y install unrar-free
 			;;
 
 			20)
