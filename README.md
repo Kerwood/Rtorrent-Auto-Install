@@ -5,7 +5,7 @@ http://LinuxBloggen.dk/
  
 This is a Bash script to ease the installation of rtorrent, rutorrent + plugins.
 
-The script is developed for Debian Wheezy (Jessie is not supported at the moment and will not work), although it should run just fine on Ubuntu 13.04 and 14.04.
+The script is developed for Debian Wheezy (**Jessie is not supported at the moment and will not work**), although it should run just fine on Ubuntu 13.04 and 14.04.
 
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing 43 plugins/addons. See list further down.
