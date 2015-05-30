@@ -10,7 +10,7 @@ The Debian script is developed for Debian Wheezy (**Jessie is not supported at t
 Credit for the Raspbian script goes to [miracle091](https://github.com/miracle091), good work mate.
 
 In the installation process you have to choose a system user to run rtorrent.
-Also you will get the opportunity of installing 43 plugins/addons. See list further down.
+Also you will get the opportunity of installing 46 plugins/addons. See list further down.
 The script add a init script that makes rtorrent start, at a possible reboot, in the 
 given username's screen session. Use "service rtorrent-init start" and 
 "service rtorrent-init stop" to start and stop rtorrent.
@@ -65,6 +65,7 @@ This scripts installs the following packages with APT.
 	screen
 	unrar-free
 	unzip
+	libssl-dev
 
 The script compiles and installs lastest xmlrpc-c from svn.  
 Installs rtorrent-0.9.4 and libtorrent-0.13.4, from github.  
