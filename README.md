@@ -3,10 +3,15 @@
 http://LinuxBloggen.dk/ 
  
  
-This is a Bash script to ease the installation of rtorrent, rutorrent + plugins.
+These are Bash scripts to ease the installation of rtorrent, rutorrent + plugins.
 
-The Debian script is developed for Debian Wheezy (**Jessie is not supported at the moment and will not work**), although it should run just fine on Ubuntu 13.04 and 14.04.
-
+**Debian Wheezy**  
+The Wheezy script is of course developed for Wheezy but should run just fine on Ubuntu 13.04 and 14.04.  
+  
+**Debian Jessie**  
+The Jessie script does not start install an init script yet. That means rtorrent will not start automatically after the script is done and when the server reboots. You'll have to login with your rtorrent user, start screen and start rtorrent.  
+  
+**Raspbian Wheezy**  
 Credit for the Raspbian script goes to [miracle091](https://github.com/miracle091), good work mate.
 
 In the installation process you have to choose a system user to run rtorrent.

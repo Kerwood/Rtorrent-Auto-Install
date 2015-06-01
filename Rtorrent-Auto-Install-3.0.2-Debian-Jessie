@@ -852,11 +852,6 @@ EOF
 	printf "%s\n" "${WEB_USER_ARRAY[@]}" > /var/www/html/rutorrent/.htpasswd
 }
 
-# Function for setting up the init script.
-function SETUP_INIT {
-
-}
-
 function INSTALL_FFMPEG {
 	printf "\n# ffpmeg mirror\ndeb http://www.deb-multimedia.org jessie main non-free\n" sudo >> /etc/apt/sources.list
 	apt-get update
@@ -942,7 +937,6 @@ do
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
-			# SETUP_INIT
 			INSTALL_COMPLETE
 			break
 			;;
