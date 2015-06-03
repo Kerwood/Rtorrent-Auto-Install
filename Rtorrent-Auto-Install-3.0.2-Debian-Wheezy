@@ -44,12 +44,12 @@ function APACHE-UTILS {
 
 	dpkg -s apache2-utils 2> /dev/null | grep "Status: install ok installed" &> /dev/null
 	if [ $? != 0 ]; then
-	        let "count++"
+	  let "count++"
 	fi
 
 	dpkg -s unzip 2> /dev/null | grep "Status: install ok installed" &> /dev/null
 	if [ $? != 0 ]; then
-	        let "count++"
+	  let "count++"
 	fi
 
 	if [ $count != 0 ]; then
