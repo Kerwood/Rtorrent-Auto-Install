@@ -720,7 +720,7 @@ function SELECT_PLUGINS {
 # Function for installing dependencies
 function APT-DEPENDENCIES {
 	apt-get update
-	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unzip libssl-dev
+	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 tmux unzip libssl-dev
 }
 
 # Function for setting up xmlrpc, libtorrent and rtorrent
@@ -874,6 +874,7 @@ function INSTALL_COMPLETE {
 	echo "If you want to change configuration for rtorrent, such as download folder, port, etc.,"
 	echo "you will need to edit the '.rtorrent.rc' file. E.g. 'nano $HOMEDIR/.rtorrent.rc'${NORMAL}"
 	echo
+	echo "Rtorrent can be started without rebooting with 'sudo systemctl start rtorrent.service'."
 
 	# Ipv4 only.
 	# grep 'inet6' instead of 'inet ' for ipv6
@@ -883,12 +884,25 @@ function INSTALL_COMPLETE {
 	else
 		echo "Visit rutorrent at http://IP-ADDRESS/rutorrent"
 	fi
-	echo
-	echo
-	echo "${RED}##### ATTENTION!!! #####"
-	echo "Rtorrent does not start automatically. You need to manually login with your"
-	echo "rtorrent user, start screen and then start rtorrent.${NORMAL}"
-	echo
+}
+
+function INSTALL_SYSTEMD_SERVICE {
+	cat > "/etc/systemd/system/rtorrent.service" <<-EOF
+	[Unit]
+	Description=rtorrent (in tmux)
+
+	[Service]
+	Type=oneshot
+	RemainAfterExit=yes
+	User=$RTORRENT_USER
+	ExecStart=/usr/bin/tmux -2 new-session -d -s rtorrent rtorrent
+	ExecStop=/usr/bin/tmux kill-session -t rtorrent
+
+	[Install]
+	WantedBy=default.target
+	EOF
+
+	systemctl enable rtorrent.service
 }
 
 CHECK_ROOT
@@ -937,6 +951,7 @@ do
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
+			INSTALL_SYSTEMD_SERVICE
 			INSTALL_COMPLETE
 			break
 			;;
