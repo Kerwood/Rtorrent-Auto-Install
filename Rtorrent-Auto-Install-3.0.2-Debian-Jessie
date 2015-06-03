@@ -188,7 +188,7 @@ function SELECT_PLUGINS {
 
 	clear
 
-	while true,	do
+	while true;	do
 		echo
 		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
 		echo
@@ -913,8 +913,7 @@ SET_RTORRENT_USER
 SET_WEB_USER
 
 # NOTICE: Change lib, rtorrent, rutorrent versions on upgrades.
-while true
-do
+while true; do
 	HEADER
 	echo " ${BOLD}rTorrent version:${NORMAL} ${RED}0.9.4${NORMAL}"
 	echo " ${BOLD}libTorrent version:${NORMAL} ${RED}0.13.4${NORMAL}"

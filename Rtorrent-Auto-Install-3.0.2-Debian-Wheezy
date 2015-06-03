@@ -188,7 +188,7 @@ function SELECT_PLUGINS {
 
 	clear
 
-	while true,	do
+	while true;	do
 		echo
 		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
 		echo
