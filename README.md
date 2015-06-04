@@ -1,40 +1,42 @@
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
 
-http://LinuxBloggen.dk/ 
- 
- 
+http://LinuxBloggen.dk/
+
+
 These are Bash scripts to ease the installation of rtorrent, rutorrent + plugins.
 
 **Debian Wheezy**  
 The Wheezy script is of course developed for Wheezy but should run just fine on Ubuntu 13.04 and 14.04.  
-  
+
 **Debian Jessie**  
-The Jessie script does not start install an init script yet. That means rtorrent will not start automatically after the script is done and when the server reboots. You'll have to login with your rtorrent user, start screen and start rtorrent.  
-  
+The Jessie script was adapted for the new default init system. Should run fine on systems that feature systemd (including Ubuntu 15.04+).
+
+Please use `systemctl start rtorrent` and `systemctl stop rtorrent` instead of the service command.
+
 **Raspbian Wheezy**  
 Credit for the Raspbian script goes to [miracle091](https://github.com/miracle091), good work mate.
 
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing 46 plugins/addons. See list further down.
-The script add a init script that makes rtorrent start, at a possible reboot, in the 
-given username's screen session. Use "service rtorrent-init start" and 
+The script add a init script that makes rtorrent start, at a possible reboot, in the
+given username's screen session. Use "service rtorrent-init start" and
 "service rtorrent-init stop" to start and stop rtorrent.
 
 
 Installation
 ------------
- 
-Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0 
+
+Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0
 
 Download the script. Remeber to change the X.X.X to the actual version numbers.
 
 	wget https://raw.github.com/Kerwood/rtorrent.auto.install/master/rtorrent.auto.install-X.X.X-Debian-Wheezy
 
-Make it executable. 
+Make it executable.
 
 	chmod +x rtorrent.auto.install-X.X.X-Debian-Wheezy
 
-Run the script. 
+Run the script.
 
 	sudo ./rtorrent.auto.install-X.X.X-Debian-Wheezy
 
@@ -51,23 +53,23 @@ Installs
 
 This scripts installs the following packages with APT.
 
-	openssl 
+	openssl
 	subversion
 	git
 	apache2
-	apache2-utils 
-	build-essential 
-	libsigc++-2.0-dev 
-	libcurl4-openssl-dev 
-	automake libtool 
-	libcppunit-dev 
-	libncurses5-dev 
-	libapache2-mod-scgi 
-	php5 
-	php5-curl 
-	php5-cli 
-	libapache2-mod-php5 
-	screen
+	apache2-utils
+	build-essential
+	libsigc++-2.0-dev
+	libcurl4-openssl-dev
+	automake libtool
+	libcppunit-dev
+	libncurses5-dev
+	libapache2-mod-scgi
+	php5
+	php5-curl
+	php5-cli
+	libapache2-mod-php5
+	screen (tmux for Jessie)
 	unrar-free
 	unzip
 	libssl-dev
@@ -80,7 +82,7 @@ Installs rutorrent-3.6 from official site.
 
 - 1 - Erase Data Plugin
 - 2 - Create Plugin
-- 3 - Trafic Plugin	
+- 3 - Trafic Plugin
 - 4 - RSS Plugin
 - 5 - Edit Plugin
 - 6 - Retrackers Plugin
@@ -89,11 +91,11 @@ Installs rutorrent-3.6 from official site.
 - 9 - Scheduler Plugin
 - 10 - Auto Tools Plugin
 - 11 - Data Dir Plugin
-- 12 - Track Lables Plugin 
+- 12 - Track Lables Plugin
 - 13 - Geo IP Plugin
-- 14 - Ratio Plugin 
+- 14 - Ratio Plugin
 - 15 - Show Peers like wTorrent Plugin
-- 16 - Seeding Time Plugin 
+- 16 - Seeding Time Plugin
 - 17 - HTTPRPC Plugin
 - 18 - Diskspace Plugin
 - 19 - Unpack Plugin
@@ -105,7 +107,7 @@ Installs rutorrent-3.6 from official site.
 - 25 - Extsearch Plugin
 - 26 - Theme Plugin
 - 27 - Login Mgr Plugin
-- 28 - ruTorrent Label Management Suite 
+- 28 - ruTorrent Label Management Suite
 - 29 - NFO Plugin
 - 30 - Chat Plugin
 - 31 - Logoff Plugin
@@ -122,8 +124,6 @@ Installs rutorrent-3.6 from official site.
 - 42 - Screenshot
 - 43 - RPC
 - 44 - Rutracker Check
-- 45 - Noty 
-- 46 - Task 
+- 45 - Noty
+- 46 - Task
 - 47 - All Plugins v3.6, Download manually to se which ones. https://bintray.com/novik65/generic/ruTorrent
-
-
