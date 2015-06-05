@@ -73,6 +73,7 @@ This scripts installs the following packages with APT.
 	unrar-free
 	unzip
 	libssl-dev
+	curl
 
 The script compiles and installs lastest xmlrpc-c from svn.  
 Installs rtorrent-0.9.4 and libtorrent-0.13.4, from github.  

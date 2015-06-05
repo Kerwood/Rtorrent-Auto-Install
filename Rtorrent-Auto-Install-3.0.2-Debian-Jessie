@@ -284,11 +284,8 @@ function SELECT_PLUGINS {
 				name="RSS Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/rss-3.6.tar.gz"
 				file="rss-3.6.tar.gz"
-				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS. \nPackage 'curl' will be installed \nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
+				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS. \nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN ; then
-					apt-get -y install curl
-				fi
 				;;
 
 			5)
@@ -718,7 +715,7 @@ function SELECT_PLUGINS {
 # Function for installing dependencies
 function APT-DEPENDENCIES {
 	apt-get update
-	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 tmux unzip libssl-dev
+	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 tmux unzip libssl-dev curl
 }
 
 # Function for setting up xmlrpc, libtorrent and rtorrent
