@@ -915,6 +915,10 @@ function INSTALL_SYSTEMD_SERVICE {
 	systemctl enable rtorrent.service
 }
 
+function START_RTORRENT {
+	systemctl start rtorrent.service	
+}
+
 CHECK_ROOT
 LICENSE
 APACHE-UTILS
@@ -965,6 +969,7 @@ while true; do
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
 			INSTALL_SYSTEMD_SERVICE
+			START_RTORRENT
 			INSTALL_COMPLETE
 			break
 			;;
