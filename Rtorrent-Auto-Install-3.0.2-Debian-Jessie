@@ -849,7 +849,7 @@ EOF
 }
 
 function INSTALL_FFMPEG {
-	printf "\n# ffpmeg mirror\ndeb http://www.deb-multimedia.org jessie main non-free\n" sudo >> /etc/apt/sources.list
+	printf "\n# ffpmeg mirror\ndeb http://www.deb-multimedia.org jessie main non-free\n" >> /etc/apt/sources.list
 	apt-get update
 	apt-get -y --force-yes install deb-multimedia-keyring
 	apt-get update
