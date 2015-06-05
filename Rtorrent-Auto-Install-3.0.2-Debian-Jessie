@@ -284,7 +284,7 @@ function SELECT_PLUGINS {
 				name="RSS Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/rss-3.6.tar.gz"
 				file="rss-3.6.tar.gz"
-				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS.\nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
+				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS. \nPackage 'curl' will be installed \nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				if DOWNLOAD_PLUGIN ; then
 					apt-get -y install curl
@@ -367,7 +367,7 @@ function SELECT_PLUGINS {
 				name="Geo IP Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/geoip-3.6.tar.gz"
 				file="geoip-3.6.tar.gz"
-				desc="http://code.google.com/p/rutorrent/wiki/PluginGeoIP"
+				desc="Packages 'GeoLiteCity' and 'php5-geoip' will be installed. http://code.google.com/p/rutorrent/wiki/PluginGeoIP"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				if DOWNLOAD_PLUGIN ; then
 					wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
@@ -428,7 +428,7 @@ function SELECT_PLUGINS {
 				name="Unpack Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/unpack-3.6.tar.gz"
 				file="unpack-3.6.tar.gz"
-				desc="This plugin is designed to manually or automatically unrar/unzip torrent data.\nhttp://code.google.com/p/rutorrent/wiki/PluginUnpack"
+				desc="This plugin is designed to manually or automatically unrar/unzip torrent data. Package 'unrar-free' will be installed. \nhttp://code.google.com/p/rutorrent/wiki/PluginUnpack"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				if DOWNLOAD_PLUGIN ; then
 					apt-get -y install unrar-free
@@ -642,7 +642,7 @@ function SELECT_PLUGINS {
 				name="Screenshot v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/screenshots-3.6.tar.gz"
 				file="screenshots-3.6.tar.gz"
-				desc="This plugin is intended to show screenshots from video files. Needs the package 'ffmpeg' to work."
+				desc="This plugin is intended to show screenshots from video files. Package 'ffmpeg' will be installed."
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				if DOWNLOAD_PLUGIN ; then
 					INSTALL_FFMPEG
@@ -692,7 +692,7 @@ function SELECT_PLUGINS {
 				name="Plugins v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 				file="plugins-3.6.tar.gz"
-				desc="This installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search).\nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!"
+				desc="This installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search).\nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nAll dependencies will be installed. \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!"
 				unpack="tar -zxvf $file -C /tmp/"
 				echo "${GREEN}DOWNLOAD_PLUGIN${NORMAL}"
 				if DOWNLOAD_PLUGIN ; then
