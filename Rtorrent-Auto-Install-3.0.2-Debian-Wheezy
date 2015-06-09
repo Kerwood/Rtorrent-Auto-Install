@@ -679,7 +679,7 @@ function SELECT_PLUGINS {
 				name="Plugins v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 				file="plugins-3.6.tar.gz"
-				desc="This installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search).\nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!"
+				desc="This installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search).\nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \n${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
 				unpack="tar -zxvf $file -C /tmp/"
 				if DOWNLOAD_PLUGIN ; then
 					mv /tmp/plugins/* $TEMP_PLUGIN_DIR

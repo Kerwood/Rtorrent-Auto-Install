@@ -691,7 +691,7 @@ function SELECT_PLUGINS {
 			name="All Plugins v3.6"
 			url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 			file="plugins-3.6.tar.gz"
-			desc="This plugin installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search). \nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nREMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!"
+			desc="This plugin installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search). \nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \n${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
 			unpack="tar -zxvf $file -C /tmp/"
 			if DOWNLOAD_PLUGIN ; then
 				mv /tmp/plugins/* $TEMP_PLUGIN_DIR
@@ -870,15 +870,30 @@ function INSTALL_COMPLETE {
 	echo "you will need to edit the '.rtorrent.rc' file. E.g. 'nano $HOMEDIR/.rtorrent.rc'${NORMAL}"
 	echo
 
-	# Ipv4 only
-	# grep 'inet6' instead of 'inet ' for ipv6
-	ip=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
-	if [ $ip ]; then
-		echo "Visit rutorrent at http://$ip/rutorrent"
+	# The IPv6 local address, is not very used for now, anyway if needed, just change 'inet' to 'inet6'
+	lcl=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
+	ext=$(curl -s http://icanhazip.com)
+
+	if [[ ! -z "$lcl" ]] && [[ ! -z "$ext" ]]; then
+		echo "${LBLUE}LOCAL IP:${NORMAL} http://$lcl/rutorrent"
+		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$ext/rutorrent"
+		echo
+		echo "Visit rutorrent through the above address."
+		echo 
 	else
-		echo "Visit rutorrent at http://IP-ADDRESS/rutorrent"
+		if [[ -z "$lcl" ]]; then
+			echo "Can't detect the local IP address"
+			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
+			echo 
+		elif [[ -z "$ext" ]]; then
+			echo "${LBLUE}LOCAL:${NORMAL} http://$lcl/rutorrent"
+			echo "Visit rutorrent through your local network"
+		else
+			echo "Can't detect the IP address"
+			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
+			echo 
+		fi
 	fi
-	echo
 }
 
 CHECK_ROOT
