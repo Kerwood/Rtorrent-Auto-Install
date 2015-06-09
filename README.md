@@ -75,7 +75,7 @@ This scripts installs the following packages with APT.
 	libssl-dev
 	curl
 
-The script compiles and installs lastest xmlrpc-c from svn.  
+The script compiles and installs lastest super-stable xmlrpc-c from sourceforge.  
 Installs rtorrent-0.9.4 and libtorrent-0.13.4, from github.  
 Installs rutorrent-3.6 from official site.
 
