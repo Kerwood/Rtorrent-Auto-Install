@@ -38,28 +38,17 @@ function CHECK_ROOT {
 	fi
 }
 
-# Checks is apache2-utils and unzip is installed. Its is needed to make the Web user
-function APACHE-UTILS {
-	count=0
+# Checks for apache2-utils and unzip if it's installed. It's is needed to make the Web user
+function APACHE_UTILS {
+	AP_UT_CHECK="$(dpkg-query -W -f='${Status}' apache2-utils 2>/dev/null | grep -c "ok installed")"
+	UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
 
-	dpkg -s apache2-utils 2> /dev/null | grep "Status: install ok installed" &> /dev/null
-	if [ $? != 0 ]; then
-	  let "count++"
-	fi
-
-	dpkg -s unzip 2> /dev/null | grep "Status: install ok installed" &> /dev/null
-	if [ $? != 0 ]; then
-	  let "count++"
-	fi
-
-	if [ $count != 0 ]; then
-		echo
+	if [ "$AP_UT_CHECK" -ne 1 ] || [ "$UNZIP_CHECK" -ne 1 ]; then
 		echo " One or both of the packages apache2-utils and unzip is not installed and is needed for the setup."
-		read -p " Do you want to install it? [y/n]: " -n 1
+		read -p " Do you want to install it? [y/n] " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
-			echo
-			apt-get -y install apache2-utils unzip
 			clear
+			apt-get -y install apache2-utils unzip
 		else
 			clear
 			exit
@@ -168,11 +157,11 @@ function DOWNLOAD_PLUGIN {
 			rm "$file"
 			echo
 			PLUGIN_ARRAY+=("${name}")
-			error1="${GREEN}${BOLD}$name${NORMAL}${GREEN} downloaded, unpacked and moved to temporary plugins folder${NORMAL}"
+			error="${GREEN}${BOLD}$name${NORMAL}${GREEN} downloaded, unpacked and moved to temporary plugins folder${NORMAL}"
 			return 0
 		else
 			echo
-			error1="${RED}Something went wrong.. Error!${NORMAL}"
+			error="${RED}Something went wrong.. Error!${NORMAL}"
 			return 1
 		fi
 	else
@@ -712,43 +701,53 @@ function SELECT_PLUGINS {
 }
 
 # Function for installing dependencies
-function APT-DEPENDENCIES {
+function APT_DEPENDENCIES {
 	apt-get update
-	apt-get -y install openssl git subversion apache2 apache2-utils build-essential libsigc++-2.0-dev libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi php5 php5-curl php5-cli libapache2-mod-php5 screen unzip libssl-dev
+	apt-get -y install openssl git apache2 apache2-utils build-essential libsigc++-2.0-dev \
+	libcurl4-openssl-dev automake libtool libcppunit-dev libncurses5-dev libapache2-mod-scgi \
+	php5 php5-curl php5-cli libapache2-mod-php5 screen unzip libssl-dev curl
 }
 
 # Function for setting up xmlrpc, libtorrent and rtorrent
 function INSTALL_RTORRENT {
-	# Installing xmlrpc-c
-	svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc-c
-	cd xmlrpc-c
+	# Use the temp folder for compiling
+	cd /tmp
+
+	# Download and install xmlrpc-c super-stable
+	curl -L http://sourceforge.net/projects/xmlrpc-c/files/latest/download -o xmlrpc-c-latest.tgz
+	tar zxvf xmlrpc-c-latest.tgz
+	mv xmlrpc-c-1.* xmlrpc
+	cd xmlrpc
 	./configure --disable-cplusplus
 	make
 	make install
+
 	cd ..
-	rm -rv xmlrpc-c
+	rm -rv xmlrpc*
 
 	mkdir rtorrent
 	cd rtorrent
 
-	# Installing libtorrent
-	wget https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -O libtorrent-0.13.4.tar.gz
+	# Download and install libtorrent
+	curl -L https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -o libtorrent-0.13.4.tar.gz
 	tar -zxvf libtorrent-0.13.4.tar.gz
 	cd libtorrent-0.13.4
 	./autogen.sh
 	./configure
 	make
 	make install
+
 	cd ..
 
-	# Installing rtorrent
-	wget https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -O rtorrent-0.9.4.tar.gz
+	# Download and install rtorrent
+	curl -L https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -o rtorrent-0.9.4.tar.gz
 	tar -zxvf rtorrent-0.9.4.tar.gz
 	cd rtorrent-0.9.4
 	./autogen.sh
 	./configure --with-xmlrpc-c
 	make
 	make install
+
 	cd ../..
 	rm -rv rtorrent
 
@@ -897,7 +896,7 @@ function INSTALL_COMPLETE {
 
 CHECK_ROOT
 LICENSE
-APACHE-UTILS
+APACHE_UTILS
 rm -rf $TEMP_PLUGIN_DIR
 HEADER
 SET_RTORRENT_USER
@@ -940,7 +939,7 @@ while true; do
 			SELECT_PLUGINS
 			;;
 		0)
-			APT-DEPENDENCIES
+			APT_DEPENDENCIES
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
 			CONFIGURE_APACHE
