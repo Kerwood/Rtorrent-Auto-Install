@@ -875,20 +875,20 @@ function INSTALL_COMPLETE {
 		echo "${LBLUE}LOCAL IP:${NORMAL} http://$lcl/rutorrent"
 		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$ext/rutorrent"
 		echo
-		echo "Visit rutorrent through your network or over internet"
-		echo "if the rutorrent port is forwarded"
+		echo "Visit rutorrent through the above address."
+		echo 
 	else
 		if [[ -z "$lcl" ]]; then
-			echo "Can't retrieve the address"
+			echo "Can't detect the local IP address"
 			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-			echo "otherwise check your network"
+			echo 
 		elif [[ -z "$ext" ]]; then
 			echo "${LBLUE}LOCAL:${NORMAL} http://$lcl/rutorrent"
 			echo "Visit rutorrent through your local network"
 		else
-			echo "Can't retrieve the address"
+			echo "Can't detect the IP address"
 			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-			echo "otherwise check your network"
+			echo 
 		fi
 	fi
 	echo
