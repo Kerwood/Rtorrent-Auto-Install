@@ -30,15 +30,15 @@ Installation video here - https://www.youtube.com/watch?v=3iwsoKcUgn0
 
 Download the script. Remeber to change the X.X.X to the actual version numbers.
 
-	wget https://raw.github.com/Kerwood/rtorrent.auto.install/master/rtorrent.auto.install-X.X.X-Debian-Wheezy
+	wget https://raw.githubusercontent.com/Kerwood/rtorrent.auto.install/master/Rtorrent-Auto-Install-X.X.X-Debian-Wheezy
 
 Make it executable.
 
-	chmod +x rtorrent.auto.install-X.X.X-Debian-Wheezy
+	chmod +x Rtorrent-Auto-Install-X.X.X-Debian-Wheezy
 
 Run the script.
 
-	sudo ./rtorrent.auto.install-X.X.X-Debian-Wheezy
+	sudo ./Rtorrent-Auto-Install-X.X.X-Debian-Wheezy
 
 Login box does not appear after install!!
 -----------------------------------------
