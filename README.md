@@ -167,7 +167,7 @@ Go here http://www.htaccesstools.com/htpasswd-generator/, write your access cred
 
 ![.htpasswd example](http://s14.postimg.org/5oxue2ipt/htpasswd_example.png)  
 
-After copy the result on '/var/www/rutorrent/.htpasswd' file.  
+After copy the result on `/var/www/rutorrent/.htpasswd` file.  
 The result is somethings like this:
 
 	admin:$apr1$QFiaWRfK$tiJRitC0lP91yH39tqRqO1
