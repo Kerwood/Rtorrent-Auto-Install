@@ -159,15 +159,3 @@ You can remove them using below command:
 
 	sudo rm -rfv /var/www/rutorrent/plugins/{httprpc,rpc}
 	
-Or manually create a .htpasswd file in `/var/www/rutorrent`.  
-
-	nano /var/www/rutorrent/.htpasswd
-	
-Go here http://www.htaccesstools.com/htpasswd-generator/, write your access credentials, like 'admin' for usename and 'admin' for password.  
-
-![.htpasswd example](http://s14.postimg.org/5oxue2ipt/htpasswd_example.png)  
-
-After copy the result on `/var/www/rutorrent/.htpasswd` file.  
-The result is somethings like this:
-
-	admin:$apr1$QFiaWRfK$tiJRitC0lP91yH39tqRqO1
