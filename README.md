@@ -33,6 +33,7 @@ Actual version for the scripts:
 - Wheezy **3.0.2**
 - Jessie **3.0.2**
 - Raspbian **3.0.2**
+- Raspbian Nginx **1.0.0**
 
 Download the script. Remember to change the X.X.X to the actual version.
 
