@@ -20,6 +20,27 @@ RPI_VERSION=""
 XMLRPC=""
 
 # Used for select best CFLAGS under compiling stage
+# CFLAGS for the rpi B and B+
+# Need to tested before use it on production systems
+# CFLAGS="-march=armv6 -mtune=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3"
+# maybe this is more specific for the hardware, but only work on gcc 4.9+
+# CFLAGS="-march=armv6zk -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3"
+
+# CFLAGS for the rpi 2
+# cause have a different SoC and need to be tested a lot
+# before make it 'stable' and 'secure' this flags
+# On the official forum say that can be used -O4 optimization
+# anyway -O3 is just enough for now
+# Because of NEON floating point don't follow (for now) entirely the IEEE standard
+# need to be added with '-mfpu=neon-vpfv4' this flags '-funsafe-math-optimizations'
+# More info at https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html
+# CFLAGS="-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations -O3"
+
+# Another flags for RPI2 can be this
+# CFLAGS="-march=armv7-a -mfpu=vfpv4 -mfloat-abi=hard -funsafe-math-optimizations -O3"
+# is less specific cause use '-march=armv7-a' instead of '-mtune=cortex-a7' and not use
+# NEON floating point but just the basic version '-mfpu=vpfuv4', anyway for now is recommend to use
+# '-funsafe-math-optimizations' with the '-mfpu=vpfuv4' or '-mfpu=neon-vpfv4'
 FLAGS=""
 
 # The system user rtorrent is going to run as
@@ -221,11 +242,11 @@ function HEADER {
 	clear
 	echo "${GREEN}
        .~~.   .~~.
-      '. \ ' ' / .'    ${NORMAL}                   _                          _ ${RED}
-       .~ .~~~..~.     ${NORMAL}   ___ ___ ___ ___| |_ ___ ___ ___ _ _    ___|_|${RED}
-      : .~.'~'.~. :    ${NORMAL}  |  _| .'|_ -| . | . | -_|  _|  _| | |  | . | |${RED}
-     ~ (   ) (   ) ~   ${NORMAL}  |_| |__,|___|  _|___|___|_| |_| |_  |  |  _|_|${RED}
-    ( : '~'.~.'~' : )  ${NORMAL}              |_|                 |___|  |_|    ${RED}
+      '. \ ' ' / .'${RED}                       _                          _
+       .~ .~~~..~.        ___ ___ ___ ___| |_ ___ ___ ___ _ _    ___|_|
+      : .~.'~'.~. :      |  _| .'|_ -| . | . | -_|  _|  _| | |  | . | |
+     ~ (   ) (   ) ~     |_| |__,|___|  _|___|___|_| |_| |_  |  |  _|_|
+    ( : '~'.~.'~' : )                |_|                 |___|  |_|    
      ~ .~ (   ) ~. ~
       (  : '~' :  )       ${NORMAL}${BOLD}Apache2 + rTorrent + ruTorrent Auto Install${NORMAL}${RED}
        '~ .~~~. ~'            ${NORMAL}${LBLUE} Patrick Kerwood @ LinuxBloggen.dk${NORMAL}${RED}
@@ -884,7 +905,7 @@ function INSTALL_XMLRPC {
 	if [[ -d /tmp/xmlrpc ]]; then
 		if [[ FLAGS -eq 1 ]]; then
 			# if is a rpi b/b+
-			./configure --disable-cplusplus 'CFLAGS=-march=armv6zk -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
+			./configure --disable-cplusplus 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 			make
 			make install
 		elif [[ FLAGS -eq 2 ]]; then
@@ -923,7 +944,7 @@ function INSTALL_LIBTORRENT {
 
 	if [[ FLAGS -eq 1 ]]; then
 		# if is a rpi b/b+
-		./configure 'CFLAGS=-march=armv6zk -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
+		./configure 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 		make
 		make install
 	elif [[ FLAGS -eq 2 ]]; then
@@ -957,7 +978,7 @@ function INSTALL_RTORRENT {
 
 	if [[ FLAGS -eq 1 ]]; then
 		# if is a rpi b/b+
-		./configure --with-xmlrpc-c 'CFLAGS=-march=armv6zk -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
+		./configure --with-xmlrpc-c 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 		make
 		make install
 	elif [[ FLAGS -eq 2 ]]; then
@@ -1215,8 +1236,8 @@ function INSTALL_COMPLETE {
 	external=$(curl -s http://icanhazip.com)
 
 	if [[ ! -z "$local" ]] && [[ ! -z "$external" ]]; then
-		echo "${LBLUE}LOCAL IP:${NORMAL} http://$lcl/rutorrent"
-		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$ext/rutorrent"
+		echo "${LBLUE}LOCAL IP:${NORMAL} http://$local/rutorrent"
+		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$external/rutorrent"
 		echo "Visit rutorrent through the above address."
 		echo 
 	else
@@ -1225,7 +1246,7 @@ function INSTALL_COMPLETE {
 			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
 			echo 
 		elif [[ -z "$external" ]]; then
-			echo "${LBLUE}LOCAL:${NORMAL} http://$lcl/rutorrent"
+			echo "${LBLUE}LOCAL:${NORMAL} http://$local/rutorrent"
 			echo "Visit rutorrent through your local network"
 		else
 			echo "Can't detect the IP address"
