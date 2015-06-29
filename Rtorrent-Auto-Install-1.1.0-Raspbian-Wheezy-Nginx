@@ -10,14 +10,13 @@ LBLUE=$(tput setaf 6)
 RED=$(tput setaf 1)
 PURPLE=$(tput setaf 5)
 
-# This is for grep the revision for RPI
-HW_REVISION="$(grep Revision /proc/cpuinfo | cut -d " " -f 2)"
-
-# RPI version showed on the installation menu
-RPI_VERSION=""
+# NOTICE: Change rtorrent, libtorrent, rutorrent versions when update are available
+RTORRENT_VERSION="0.9.4"
+LIBTORRENT_VERSION="0.13.4"
+RUTORRENT_VERSION="3.6"
 
 # Used for choose what version of xmlrpc is installed
-XMLRPC=""
+XMLRPC_VERSION=""
 
 # Used for select best CFLAGS under compiling stage
 # CFLAGS for the rpi B and B+
@@ -29,11 +28,10 @@ XMLRPC=""
 # CFLAGS for the rpi 2
 # cause have a different SoC and need to be tested a lot
 # before make it 'stable' and 'secure' this flags
-# On the official forum say that can be used -O4 optimization
-# anyway -O3 is just enough for now
-# Because of NEON floating point don't follow (for now) entirely the IEEE standard
+# On the official raspberry forum say that can be used -O4 optimization, anyway -O3 is just enough for now
+# Because NEON floating point don't follow (for now) entirely the IEEE standard
 # need to be added with '-mfpu=neon-vpfv4' this flags '-funsafe-math-optimizations'
-# More info at https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html
+# More info at https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html - search for NEON instruction
 # CFLAGS="-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations -O3"
 
 # Another flags for RPI2 can be this
@@ -41,7 +39,10 @@ XMLRPC=""
 # is less specific cause use '-march=armv7-a' instead of '-mtune=cortex-a7' and not use
 # NEON floating point but just the basic version '-mfpu=vpfuv4', anyway for now is recommend to use
 # '-funsafe-math-optimizations' with the '-mfpu=vpfuv4' or '-mfpu=neon-vpfv4'
-FLAGS=""
+COMPILE_FLAGS=""
+
+# RPI version showed on the installation menu
+RPI_VERSION=""
 
 # The system user rtorrent is going to run as
 RTORRENT_USER=""
@@ -58,8 +59,8 @@ TEMP_PLUGIN_DIR="/tmp/rutorrentPlugins"
 # Array of downloaded plugins
 PLUGIN_ARRAY=()
 
-#rTorrent users home dir.
-HOMEDIR=""
+# rTorrent users home dir
+RTORRENT_HOME_DIR=""
 
 # Function to check if running user is root
 function CHECK_ROOT {
@@ -74,10 +75,9 @@ function CHECK_APACHE_INST {
 	APACHE2_CHECK="$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")"
 
 	if [ "$APACHE2_CHECK" -eq 1 ]; then
-		echo " Apache2 is installed on this system, for avoid errors is required to unistall it or just remove the service from init.d"
+		echo -e " Apache2 is installed on this system, for avoid errors is required to unistall it\n or just remove the service from start at boot."
 		echo
-		read -p " Do you want to remove the service from init.d? [y/n] " -n 1
-		clear
+		read -p " Do you want to remove the service from start at boot? [y/n] " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			service apache2 stop >> /dev/null
 			update-rc.d -f apache2 remove >> /dev/null
@@ -86,7 +86,7 @@ function CHECK_APACHE_INST {
 			echo " Apache2 service is removed from init.d"
 			echo " ${BOLD}This step is completely optional and not required for continue${NORMAL}"
 			echo
-			read -p " Do you want to complete uninstall apache2 package? [y/n] " -n 1
+			read -p " Do you want to complete uninstall apache2 and related packages? [y/n] " -n 1
 			if [[ $REPLY =~ [Yy]$ ]]; then
 				clear
 				apt-get -y purge apache2
@@ -96,28 +96,38 @@ function CHECK_APACHE_INST {
 	fi
 }
 
-# Check rpi version for use the right compile flags
-# All the revision number is taken for this article from Matt
+# Check rpi version for use the right compile flags and for show your version on main menu
+# All the revision number is taken from the page for raspberry on elinux.org wiki and from raspberrypi-spy blog
+# http://elinux.org/RPi_HardwareHistory#Board_Revision_History
 # http://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
 function CHECK_RPI_VERSION {
+	# This is for found the revision for RPI
+	HW_REVISION="$(grep Revision /proc/cpuinfo | cut -d " " -f 2)"
+	
 	if [ $HW_REVISION == '0002' -o $HW_REVISION == '0003' ]; then
 		RPI_VERSION="B rev. 1.0 - 256MB"
-		FLAGS="1"
+		COMPILE_FLAGS=1
 	elif [ $HW_REVISION == '0004' -o $HW_REVISION == '0005' -o $HW_REVISION == '0006' ]; then
 		RPI_VERSION="B rev. 2.0 - 256MB"
-		FLAGS="1"
+		COMPILE_FLAGS=1
+	elif [ $HW_REVISION == '0007' -o $HW_REVISION == '0008' -o $HW_REVISION == '0009' ]; then
+		RPI_VERSION="A rev. 2.0 - 256MB"
+		COMPILE_FLAGS=1
 	elif [ $HW_REVISION == '000d' -o $HW_REVISION == '000e' -o $HW_REVISION == '000f' ]; then
 		RPI_VERSION="B rev. 2.0 - 512MB"
-		FLAGS="1"
+		COMPILE_FLAGS=1
 	elif [ $HW_REVISION == '0010' ]; then
-		RPI_VERSION="B+ - 512MB"
-		FLAGS="1"
+		RPI_VERSION="B+ rev. 1.0 - 512MB"
+		COMPILE_FLAGS=1
+	elif [ $HW_REVISION == '0012' ]; then
+		RPI_VERSION="A+ rev. 1.0 - 256MB"
+		COMPILE_FLAGS=1
 	elif [ $HW_REVISION == 'a01041' -o $HW_REVISION == 'a21041' ]; then
 		RPI_VERSION="2 B - 1GB"
-		FLAGS="2"
+		COMPILE_FLAGS=2
 	else
 		RPI_VERSION="Unknown"
-		FLAGS="0"
+		COMPILE_FLAGS=0
 	fi
 }
 
@@ -127,7 +137,7 @@ function WEB_USER_UTILS {
 	UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
 
 	if [ "$AP_UT_CHECK" -ne 1 ] && [ "$UNZIP_CHECK" -ne 1 ]; then
-		echo " Both packages apache2-utils and unzip is not installed and is needed for the setup."
+		echo " Both packages apache2-utils and unzip is not installed and is needed for continue."
 		read -p " Do you want to install it? [y/n] " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			clear
@@ -192,7 +202,7 @@ function SET_RTORRENT_USER {
 			echo
 			echo "You cant use 'nobody' as user!"
 		else
-			HOMEDIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
+			RTORRENT_HOME_DIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
 			con=1
 		fi
 	done
@@ -217,7 +227,7 @@ function SET_WEB_USER {
 	done
 }
 
-# Function to list WebUI users in the menu
+# Function to list webinterface users in the menu
 function LIST_WEB_USERS {
 	for i in ${WEB_USER_ARRAY[@]}; do
 		USER_CUT=$(echo $i | cut -d \: -f 1)
@@ -225,7 +235,7 @@ function LIST_WEB_USERS {
 	done
 }
 
-# Function to list plugins, downloaded, in the menu
+# Function to list downloaded plugins in the menu
 function LIST_PLUGINS {
 	if [ ${#PLUGIN_ARRAY[@]} -eq 0 ]; then
 		echo "   No plugins downloaded!"
@@ -246,7 +256,7 @@ function HEADER {
        .~ .~~~..~.        ___ ___ ___ ___| |_ ___ ___ ___ _ _    ___|_|
       : .~.'~'.~. :      |  _| .'|_ -| . | . | -_|  _|  _| | |  | . | |
      ~ (   ) (   ) ~     |_| |__,|___|  _|___|___|_| |_| |_  |  |  _|_|
-    ( : '~'.~.'~' : )                |_|                 |___|  |_|    
+    ( : '~'.~.'~' : )                |_|                 |___|  |_|
      ~ .~ (   ) ~. ~
       (  : '~' :  )       ${NORMAL}${BOLD}Apache2 + rTorrent + ruTorrent Auto Install${NORMAL}${RED}
        '~ .~~~. ~'            ${NORMAL}${LBLUE} Patrick Kerwood @ LinuxBloggen.dk${NORMAL}${RED}
@@ -789,15 +799,15 @@ function CHOOSE_XMLRPC_VERSION {
 
 	case "$version" in
 		1)
-			XMLRPC=1;
+			XMLRPC_VERSION=1;
 			INSTALL_XMLRPC
 			;;
 		2)
-			XMLRPC=2;
+			XMLRPC_VERSION=2;
 			INSTALL_XMLRPC
 			;;
 		3)
-			XMLRPC=3;
+			XMLRPC_VERSION=3;
 			INSTALL_XMLRPC
 			;;
 		0)
@@ -827,15 +837,15 @@ function SHOW_XMLRPC_CHANGELOG {
 
 	case "$changelog" in
 		1)
-			XMLRPC=1;
+			XMLRPC_VERSION=1;
 			CHANGELOG_XMLRPC
 			;;
 		2)
-			XMLRPC=2;
+			XMLRPC_VERSION=2;
 			CHANGELOG_XMLRPC
 			;;
 		3)
-			XMLRPC=3;
+			XMLRPC_VERSION=3;
 			CHANGELOG_XMLRPC
 			;;
 		0)
@@ -850,15 +860,15 @@ function CHANGELOG_XMLRPC {
 	# Use temp folder
 	cd /tmp
 
-	if [[ XMLRPC -eq 1 ]]; then
+	if [[ XMLRPC_VERSION -eq 1 ]]; then
 		# Download and show changelog for xmlrpc-c super-stable
 		wget -q http://xmlrpc-c.sourceforge.net/change_super_stable.html -O xmlrpc-ss-changelog.txt 2>&1 /dev/null
 		sed -n -e '1,17d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-ss-changelog.txt > xmlrpc-changelog.txt
-	elif [[ XMLRPC -eq 2 ]]; then
+	elif [[ XMLRPC_VERSION -eq 2 ]]; then
 		# Download and show changelog for xmlrpc-c stable
 		wget -q http://xmlrpc-c.sourceforge.net/change_stable.html -O xmlrpc-sb-changelog.txt 2>&1 /dev/null
 		sed -n -e '1,15d; 21,22d; 32,33d; 49,50d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-sb-changelog.txt > xmlrpc-changelog.txt
-	elif [[ XMLRPC -eq 3 ]]; then
+	elif [[ XMLRPC_VERSION -eq 3 ]]; then
 		# Download and show changelog for xmlrpc-c advanced
 		wget -q http://xmlrpc-c.sourceforge.net/change_advanced.html -O xmlrpc-ad-changelog.txt 2>&1 /dev/null
 		sed -n -e '1,15d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-ad-changelog.txt > xmlrpc-changelog.txt
@@ -879,20 +889,20 @@ function INSTALL_XMLRPC {
 	# Use the temp folder for compiling
 	cd /tmp
 
-	if [[ XMLRPC -eq 1 ]]; then
+	if [[ XMLRPC_VERSION -eq 1 ]]; then
 		# Download and install xmlrpc-c super-stable from sourceforge
 		curl -q -L http://sourceforge.net/projects/xmlrpc-c/files/latest/download -o xmlrpc-c.tgz
 		tar zxvf xmlrpc-c.tgz
 		mv xmlrpc-c-1.* xmlrpc
 		cd xmlrpc
-	elif [[ XMLRPC -eq 2 ]]; then
+	elif [[ XMLRPC_VERSION -eq 2 ]]; then
 		# Package subversion is needed
 		apt-get -y install subversion
 
 		# Download and install xmlrpc-c stable from sourceforge SVN
 		svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc
 		cd xmlrpc
-	elif [[ XMLRPC -eq 3 ]]; then
+	elif [[ XMLRPC_VERSION -eq 3 ]]; then
 		# Package subversion is needed
 		apt-get -y install subversion
 
@@ -903,17 +913,17 @@ function INSTALL_XMLRPC {
 
 	# Check if xmlrpc directory exist
 	if [[ -d /tmp/xmlrpc ]]; then
-		if [[ FLAGS -eq 1 ]]; then
+		if [[ COMPILE_FLAGS -eq 1 ]]; then
 			# if is a rpi b/b+
 			./configure --disable-cplusplus 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 			make
 			make install
-		elif [[ FLAGS -eq 2 ]]; then
+		elif [[ COMPILE_FLAGS -eq 2 ]]; then
 			# if is a rpi2
 			./configure --disable-cplusplus 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
 			make -j2
 			make install
-		elif [[ FLAGS -eq 0 ]]; then
+		elif [[ COMPILE_FLAGS -eq 0 ]]; then
 			# if rpi version can not be retrived, is compiled with the default system flags
 			./configure --disable-cplusplus
 			make
@@ -937,22 +947,22 @@ function INSTALL_LIBTORRENT {
 	cd rtorrent
 
 	# Download and install libtorrent
-	curl -L https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -o libtorrent-0.13.4.tar.gz
-	tar -zxvf libtorrent-0.13.4.tar.gz
-	cd libtorrent-0.13.4
+	curl -L https://github.com/rakshasa/libtorrent/archive/""$LIBTORRENT_VERSION"".tar.gz -o libtorrent-""$LIBTORRENT_VERSION"".tar.gz
+	tar -zxvf libtorrent-$LIBTORRENT_VERSION.tar.gz
+	cd libtorrent-$LIBTORRENT_VERSION
 	./autogen.sh
 
-	if [[ FLAGS -eq 1 ]]; then
+	if [[ COMPILE_FLAGS -eq 1 ]]; then
 		# if is a rpi b/b+
 		./configure 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 		make
 		make install
-	elif [[ FLAGS -eq 2 ]]; then
+	elif [[ COMPILE_FLAGS -eq 2 ]]; then
 		# if is a rpi2
 		./configure 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
 		make -j2
 		make install
-	elif [[ FLAGS -eq 0 ]]; then
+	elif [[ COMPILE_FLAGS -eq 0 ]]; then
 		# if rpi version can not be retrived, is compiled with the default system flags
 		./configure
 		make
@@ -971,22 +981,22 @@ function INSTALL_RTORRENT {
 	cd /tmp
 
 	# Download and install rtorrent
-	curl -L https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -o rtorrent-0.9.4.tar.gz
-	tar -zxvf rtorrent-0.9.4.tar.gz
-	cd rtorrent-0.9.4
+	curl -L https://github.com/rakshasa/rtorrent/archive/""$RTORRENT_VERSION"".tar.gz -o rtorrent-""$RTORRENT_VERSION"".tar.gz
+	tar -zxvf rtorrent-$RTORRENT_VERSION.tar.gz
+	cd rtorrent-$RTORRENT_VERSION
 	./autogen.sh
 
-	if [[ FLAGS -eq 1 ]]; then
+	if [[ COMPILE_FLAGS -eq 1 ]]; then
 		# if is a rpi b/b+
 		./configure --with-xmlrpc-c 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 		make
 		make install
-	elif [[ FLAGS -eq 2 ]]; then
+	elif [[ COMPILE_FLAGS -eq 2 ]]; then
 		# if is a rpi2
 		./configure --with-xmlrpc-c 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
 		make -j2
 		make install
-	elif [[ FLAGS -eq 0 ]]; then
+	elif [[ COMPILE_FLAGS -eq 0 ]]; then
 		# if rpi version can not be retrived, is compiled with the default system flags
 		./configure --with-xmlrpc-c
 		make
@@ -1000,37 +1010,37 @@ function INSTALL_RTORRENT {
 	ldconfig
 
 	# Creating session directory
-	if [ ! -d $HOMEDIR/.rtorrent-session ]; then
-		mkdir "$HOMEDIR"/.rtorrent-session
-		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/.rtorrent-session
+	if [ ! -d $RTORRENT_HOME_DIR/.rtorrent-session ]; then
+		mkdir "$RTORRENT_HOME_DIR"/.rtorrent-session
+		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/.rtorrent-session
 	else
-		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/.rtorrent-session
+		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/.rtorrent-session
 	fi
 
 	# Creating downloads folder
-	if [ ! -d "$HOMEDIR"/Downloads ]; then
-		mkdir "$HOMEDIR"/Downloads
-		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/Downloads
+	if [ ! -d "$RTORRENT_HOME_DIR"/Downloads ]; then
+		mkdir "$RTORRENT_HOME_DIR"/Downloads
+		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/Downloads
 	else
-		chown "$RTORRENT_USER"."$RTORRENT_USER" "$HOMEDIR"/Downloads
+		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/Downloads
 	fi
 
 	# Downloading rtorrent.rc file.
-	wget -O $HOMEDIR/.rtorrent.rc https://raw.github.com/Kerwood/rtorrent.auto.install/master/Files/rtorrent.rc
-	chown "$RTORRENT_USER"."$RTORRENT_USER" $HOMEDIR/.rtorrent.rc
-	sed -i "s@HOMEDIRHERE@$HOMEDIR@g" $HOMEDIR/.rtorrent.rc
+	wget -O $RTORRENT_HOME_DIR/.rtorrent.rc https://raw.github.com/Kerwood/rtorrent.auto.install/master/Files/rtorrent.rc
+	chown "$RTORRENT_USER"."$RTORRENT_USER" $RTORRENT_HOME_DIR/.rtorrent.rc
+	sed -i "s@HOMEDIRHERE@$RTORRENT_HOME_DIR@g" $RTORRENT_HOME_DIR/.rtorrent.rc
 }
 
 # Function for installing rutorrent and plugins
 function INSTALL_RUTORRENT {
 	# Download and install rutorrent
-	curl -L http://dl.bintray.com/novik65/generic/rutorrent-3.6.tar.gz -o rutorrent-3.6.tar.gz
-	tar -zxvf rutorrent-3.6.tar.gz
+	curl -L http://dl.bintray.com/novik65/generic/rutorrent-""$RUTORRENT_VERSION"".tar.gz -o rutorrent-""$RUTORRENT_VERSION"".tar.gz
+	tar -zxvf rutorrent-$RUTORRENT_VERSION.tar.gz
 
 	if [ -d "/var/www/rutorrent" ]; then rm -rf /var/www/rutorrent; fi
 
 	mv -f rutorrent /var/www/
-	rm -v rutorrent-3.6.tar.gz
+	rm -v rutorrent-$RUTORRENT_VERSION.tar.gz
 
 	if [ -d "$TEMP_PLUGIN_DIR" ]; then mv -fv "$TEMP_PLUGIN_DIR"/* /var/www/rutorrent/plugins; fi
 
@@ -1126,7 +1136,7 @@ function CONFIGURE_NGINX {
 			#gzip on;
 
 			upstream backendrtorrent {
-				server unix:$HOMEDIR/rtorrent/.rtorrent.sock;
+				server unix:$RTORRENT_HOME_DIR/rtorrent/.rtorrent.sock;
 			}
 			upstream backendrutorrent {
 				server unix:/var/run/php-fpm-rutorrent.sock;
@@ -1192,18 +1202,18 @@ function CONFIGURE_NGINX {
 function PREPARE_FOLDERS {
 	if [[ ! -d "/var/www" ]]; then mkdir -p /var/www; fi
 
-	if [[ ! -d "$HOMEDIR/downloads" ]] || [[ ! -d "$HOMEDIR/watch" ]] || [[ ! -d "$HOMEDIR/.session" ]] || [[ ! -d "$HOMEDIR/.sockets" ]]; then
-		mkdir $HOMEDIR/downloads
-		mkdir $HOMEDIR/watch
-		mkdir $HOMEDIR/.session
-		mkdir $HOMEDIR/.sockets
+	if [[ ! -d "$RTORRENT_HOME_DIR/downloads" ]] || [[ ! -d "$RTORRENT_HOME_DIR/watch" ]] || [[ ! -d "$RTORRENT_HOME_DIR/.session" ]] || [[ ! -d "$RTORRENT_HOME_DIR/.sockets" ]]; then
+		mkdir $RTORRENT_HOME_DIR/downloads
+		mkdir $RTORRENT_HOME_DIR/watch
+		mkdir $RTORRENT_HOME_DIR/.session
+		mkdir $RTORRENT_HOME_DIR/.sockets
 	fi
 
-	touch $HOMEDIR/.sockets/rpc-socket
-	touch $HOMEDIR/.rtorrent.rc
+	touch $RTORRENT_HOME_DIR/.sockets/rpc-socket
+	touch $RTORRENT_HOME_DIR/.rtorrent.rc
 
 	# update permission
-	chown -R "$RTORRENT_USER"."$RTORRENT_USER" $HOMEDIR/
+	chown -R "$RTORRENT_USER"."$RTORRENT_USER" $RTORRENT_HOME_DIR/
 	chown -R www-data:www-data /var/www/
 }
 
@@ -1223,36 +1233,34 @@ function INSTALL_COMPLETE {
 
 	echo "${GREEN}Installation is complete.${NORMAL}"
 	echo
-	echo "${PURPLE}Your downloads folder is in ${LBLUE}$HOMEDIR/Downloads${NORMAL}"
-	echo "${PURPLE}Sessions data is ${LBLUE}$HOMEDIR/.rtorrent-session${NORMAL}"
-	echo "${PURPLE}rtorrent's configuration file is ${LBLUE}$HOMEDIR/.rtorrent.rc${NORMAL}"
+	echo "${PURPLE}Your downloads folder is in ${LBLUE}$RTORRENT_HOME_DIR/Downloads${NORMAL}"
+	echo "${PURPLE}Sessions data is ${LBLUE}$RTORRENT_HOME_DIR/.rtorrent-session${NORMAL}"
+	echo "${PURPLE}rtorrent's configuration file is ${LBLUE}$RTORRENT_HOME_DIR/.rtorrent.rc${NORMAL}"
 	echo
 	echo "${PURPLE}If you want to change settings for rtorrent, such as download folder, etc.,"
-	echo "you need to edit the '.rtorrent.rc' file. E.g. 'nano $HOMEDIR/.rtorrent.rc'${NORMAL}"
+	echo "you need to edit the '.rtorrent.rc' file. E.g. 'nano $RTORRENT_HOME_DIR/.rtorrent.rc'${NORMAL}"
 	echo
 
 	# The IPv6 local address, is not very used for now, anyway if needed, just change 'inet' to 'inet6'
-	local=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
-	external=$(curl -s http://icanhazip.com)
+	LOCAL_IP=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
+	EXTERNAL_IP=$(curl -s http://icanhazip.com)
 
-	if [[ ! -z "$local" ]] && [[ ! -z "$external" ]]; then
-		echo "${LBLUE}LOCAL IP:${NORMAL} http://$local/rutorrent"
-		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$external/rutorrent"
+	if [[ ! -z "$LOCAL_IP" ]] && [[ ! -z "$EXTERNAL_IP" ]]; then
+		echo "${LBLUE}LOCAL IP:${NORMAL} http://$LOCAL_IP/rutorrent"
+		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$EXTERNAL_IP/rutorrent"
 		echo "Visit rutorrent through the above address."
 		echo 
+	elif [[ -z "$LOCAL_IP" ]]; then
+		echo "Can't detect the local IP address"
+		echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
+		echo 
+	elif [[ -z "$EXTERNAL_IP" ]]; then
+		echo "${LBLUE}LOCAL:${NORMAL} http://$LOCAL_IP/rutorrent"
+		echo "Visit rutorrent through your local network"
 	else
-		if [[ -z "$local" ]]; then
-			echo "Can't detect the local IP address"
-			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-			echo 
-		elif [[ -z "$external" ]]; then
-			echo "${LBLUE}LOCAL:${NORMAL} http://$local/rutorrent"
-			echo "Visit rutorrent through your local network"
-		else
-			echo "Can't detect the IP address"
-			echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-			echo 
-		fi
+		echo "Can't detect the IP address"
+		echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
+		echo
 	fi
 	echo
 }
@@ -1267,15 +1275,13 @@ HEADER
 SET_RTORRENT_USER
 SET_WEB_USER
 
-# NOTICE: Change lib, rtorrent, rutorrent versions when update are available
 while true; do
 	HEADER
 
 	if [[ "$RPI_VERSION" == "Unknown" ]]; then
 		echo " ${BOLD}Raspberry${NORMAL}${RED} Unknown Version${NORMAL}"
-		echo " ${PURPLE}Please open a news issue to report our hardware"
-		echo " by copying the result of the following command:"
-		echo " ${BOLD}grep Revision /proc/cpuinfo | cut -d \" \" -f 2${NORMAL}"
+		echo " ${PURPLE}Open a news issue to report our hardware at https://github.com/Kerwood/rtorrent.auto.install"
+		echo " by copying the result of the following command:\n ${BOLD}grep Revision /proc/cpuinfo | cut -d \" \" -f 2${NORMAL}"
 	elif [[ "$RPI_VERSION" == "2 B - 1GB" ]]; then
 		echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 		echo "${RED} WARNING!!!"
@@ -1288,14 +1294,13 @@ while true; do
 	fi
 
 	echo
-	echo " ${BOLD}rTorrent version:${NORMAL}   ${RED}0.9.4${NORMAL}"
-	echo " ${BOLD}libTorrent version:${NORMAL} ${RED}0.13.4${NORMAL}"
-	echo " ${BOLD}ruTorrent version:${NORMAL}  ${RED}3.6${NORMAL}"
+	echo " ${BOLD}rTorrent version:${NORMAL}   ${RED}$RTORRENT_VERSION${NORMAL}"
+	echo " ${BOLD}libTorrent version:${NORMAL} ${RED}$LIBTORRENT_VERSION${NORMAL}"
+	echo " ${BOLD}ruTorrent version:${NORMAL}  ${RED}$RUTORRENT_VERSION${NORMAL}"
 	echo
 	echo " ${BOLD}rTorrent user:${NORMAL}${GREEN} $RTORRENT_USER${NORMAL}"
 	echo -n " ${BOLD}ruTorrent user(s):${NORMAL}${GREEN}"
 	LIST_WEB_USERS
-	echo
 	echo
 	echo " ${NORMAL}${BOLD}ruTorrent plugins:${NORMAL}${GREEN}"
 	LIST_PLUGINS
@@ -1308,9 +1313,9 @@ while true; do
 	echo " [q] - Quit"
 	echo
 	echo -n "${GREEN}>>${NORMAL} "
-	read case
+	read -e install
 
-	case "$case" in
+	case "$install" in
 		1)
 			SET_RTORRENT_USER
 			;;
