@@ -793,7 +793,7 @@ function INSTALL_RUTORRENT {
 	rm -v rutorrent-3.6.tar.gz
 
 	if [ -d "$TEMP_PLUGIN_DIR" ]; then
-		mv -fv "$TEMP_PLUGIN_DIR"/* /var/www/rutorrent/plugins
+		mv -fv "$TEMP_PLUGIN_DIR"/* /var/www/html/rutorrent/plugins
 	fi
 
 	# Changing permissions for rutorrent and plugins.
