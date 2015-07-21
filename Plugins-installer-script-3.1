@@ -1,0 +1,742 @@
+#!/bin/bash
+# PLEASE DO NOT SET ANY OF THE VARIABLES, THEY WILL BE POPULATED IN THE MENU
+clear
+
+# Formatting variables
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+PURPLE=$(tput setaf 5)
+LBLUE=$(tput setaf 6)
+
+# Temporary download folder for plugins
+TEMP_PLUGIN_DIR="/tmp/rutorrentPlugins"
+
+# Variable to understand what is needed for make a plugin work
+PLUGIN_NEEDS=""
+
+# Array of downloaded plugins
+PLUGIN_ARRAY=()
+
+#rTorrent users home dir.
+PLUGINS_DIR=""
+
+# Function to check if running user is root
+function CHECK_ROOT {
+	if [[ "$(id -u)" != "0" ]]; then
+		echo "Error! You must be a root user to run this script,\n please use any root user to continue." 1>&2
+		exit 1
+	fi
+}
+
+# Function to check or change your plugins folders
+function CHECK_PLUGINS_FOLDER {
+	echo " Please enter the path to your rutorrent plugins folder."
+	echo -n " Leave blank for default [/var/www/rutorrent/plugins]: "
+	read DIR
+
+	if [ -z "$DIR" ]; then
+		PLUGINS_DIR="/var/www/rutorrent/plugins"
+	else
+		count=0
+		while [ $count -eq 0 ]; do
+			if [ ! -d "$DIR" ]; then
+				echo
+				echo -e "${RED} Error! This folder does not exits.${NORMAL}"
+				echo
+				echo " Is possible to create it, if you want."
+				read -p " You want to create $DIR?" -n 1
+				if [[ $REPLY =~ [Yy]$ ]]; then
+					count=1
+					mkdir -vp $DIR
+					PLUGINS_DIR="$DIR"
+				elif [[ $REPLY =~ [Nn]$ ]]; then
+					count=1
+					CHECK_PLUGINS_FOLDER
+				else
+					count=0
+					error="${RED} Can't understand your choise!${NORMAL}"
+				fi
+			done
+		fi
+	fi
+}
+
+# License
+function LICENSE {
+	clear
+	echo "${BOLD}--------------------------------------------------------------------------------"
+	echo " THE BEER-WARE LICENSE (Revision 42):"
+	echo " <patrick@kerwood.dk> wrote this script. As long as you retain this notice you"
+	echo " can do whatever you want with this stuff. If we meet some day, and you think"
+	echo " this stuff is worth it, you can buy me a beer in return."
+	echo
+	echo " - ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
+	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
+	echo
+	read -p " Press any key to continue..." -n 1
+	echo
+}
+
+# Header for the menu
+function HEADER {
+	clear
+	echo "${BOLD}--------------------------------------------------------------------------------"
+	echo "                  Web Server + Rtorrent + Rutorrent Auto Install"
+	echo "                        ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
+	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
+}
+
+# Function to list downloaded plugins in the menu
+function LIST_PLUGINS {
+	if [ ${#PLUGIN_ARRAY[@]} -eq 0 ]; then
+		echo "   No plugins downloaded!"
+	else
+		for i in "${PLUGIN_ARRAY[@]}"; do
+			echo -e "   - $i"
+		done
+	fi
+}
+
+# Function for the plugins download part
+function DOWNLOAD_PLUGIN {
+	clear
+	echo "${GREEN}-------------------------------------| Info |-----------------------------------${NORMAL}"
+	echo
+	echo " Plugin: ${LBLUE}$name${NORMAL}"
+	echo
+	echo -e " $desc"
+	echo
+	echo " Info at $homepage"
+	echo
+	read -p " You want to download it [y/n]: " -n 1
+
+	if [[ $REPLY =~ [Yy]$ ]]; then
+		if [[ $PLUGIN_NEEDS == "geoip" ]]; then
+			wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+			mkdir -v /usr/share/GeoIP
+			gunzip GeoLiteCity.dat.gz
+			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+			rm GeoLiteCity.dat.gz
+			apt-get -y install php5-geoip
+		elif [[ $PLUGIN_NEEDS == "unrar" ]]; then
+			apt-get -y install unrar-free
+		elif [[ $PLUGIN_NEEDS == "mediainfo" ]]; then
+			apt-get -y install libzen0 libmediainfo0 mediainfo
+			wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
+			rm _task-3.6.tar.gz
+		elif [[ $PLUGIN_NEEDS == "ffmpeg" ]]; then
+			apt-get -y install ffmpeg
+			wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
+			rm _task-3.6.tar.gz
+		elif [[ $PLUGIN_NEEDS == "all" ]]; then
+			# for geoip
+			wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+			mkdir -v /usr/share/GeoIP
+			gunzip GeoLiteCity.dat.gz
+			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+			rm GeoLiteCity.dat.gz
+
+			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
+			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo unrar-free
+		else
+			PLUGIN_NEEDS=""
+		fi
+
+		echo
+		wget "$url"
+		$unpack
+		if [ $? -eq "0" ]; then
+			rm "$file"
+			echo
+			PLUGIN_ARRAY+=("${name}")
+			error=" Plugin downloaded, unpacked and moved to temp folder${NORMAL}"
+			count=0
+			return 0
+		else
+			echo
+			error="${RED} Something went wrong...Error!${NORMAL}"
+			return 1
+		fi
+	else
+		count=0
+	fi
+	echo
+}
+
+function INSTALL_PLUGIN {
+	# Move plugins to rutorrent folder
+	if [ -d "$TEMP_PLUGIN_DIR" ]; then mv -fv "$TEMP_PLUGIN_DIR"/* $PLUGINS_DIR; fi
+
+	# Changing permissions for moved folder and plugins
+	chown -R www-data:www-data $PLUGINS_DIR
+	chmod -R 775 $PLUGINS_DIR
+}
+
+function SELECT_PLUGINS {
+	if [ ! -d "$TEMP_PLUGIN_DIR" ]; then mkdir $TEMP_PLUGIN_DIR; fi
+	count=0
+
+	while true;	do
+		while [ $count -eq 0 ]; do
+			clear
+			echo "${GREEN}-----------------------------------| ${BOLD}Page 1${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+			echo " [1] - Erase Data ${GREEN}[recommended]${NORMAL}"
+			echo " [2] - Create v3.6"
+			echo " [3] - Traffic v3.6"
+			echo " [4] - RSS v3.6"
+			echo " [5] - Edit v3.6"
+			echo " [6] - Retrackers v3.6"
+			echo " [7] - Throttle v3.6"
+			echo " [8] - Cookies v3.6"
+			echo " [9] - Scheduler v3.6"
+			echo " [10] - Auto Tools v3.6"
+			echo " [11] - Data Dir v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [12] - Track Lables v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [13] - Geo IP v3.6"
+			echo " [14] - Ratio v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [15] - Show Peers like wTorrent v3.6"
+			count=1
+		done
+		echo
+		echo " [p1-3] - Change plugin page"
+		echo " [q] - Exit plugin installation"
+		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
+		echo -e $error
+		unset error
+		echo
+		echo -n "Choose plugin to see info: "
+
+		read -e plugin
+
+		case $plugin in
+			p1)
+				count=0
+				;;
+			p2)
+				clear
+				echo "${GREEN}-----------------------------------| ${BOLD}Page 2${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+				echo " [16] - Seeding Time v3.6 ${GREEN}[recommended]${NORMAL}"
+				echo " [17] - HTTPRPC v3.6"
+				echo " [18] - Diskspace v3.6"
+				echo " [19] - Unpack v3.6"
+				echo " [20] - Get Dir v3.6"
+				echo " [21] - Source v3.6"
+				echo " [22] - Chunks v3.6"
+				echo " [23] - Data v3.6"
+				echo " [24] - CPU Load v3.6"
+				echo " [25] - Extsearch v3.6"
+				echo " [26] - Theme v3.6"
+				echo " [27] - Login Mgr v3.6"
+				echo " [28] - ruTorrent Label Management Suite v1.1 ${GREEN}[recommended]${NORMAL}"
+				echo " [29] - NFO ${GREEN}[recommended]${NORMAL}"
+				echo " [30] - Chat v2.0"
+				echo " [31] - Logoff v1.3"
+				count=1
+				;;
+			p3)
+				clear
+				echo "${GREEN}-----------------------------------| ${BOLD}Page 3${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+				echo " [32] - Pause v1.2"
+				echo " [33] - Instant Search v1.0"
+				echo " [34] - File Drop v3.6 (FF > 3.6 & Chrome only)"
+				echo " [35] - Check Port v3.6"
+				echo " [36] - History v3.6"
+				echo " [37] - iPad v3.6"
+				echo " [38] - Extended Ratio v3.6"
+				echo " [39] - Feeds v3.6"
+				echo " [40] - Media Information v3.6"
+				echo " [41] - RSS URL Rewrite v3.6"
+				echo " [42] - Screenshot v3.6"
+				echo " [43] - RPC v3.6"
+				echo " [44] - Rutracker Check v3.6"
+				echo " [45] - Noty v3.6"
+				echo " [46] - Task v3.6"
+				echo " [47] - All Plugins v3.6. More info at http://git.io/vtDfb"
+				count=1
+				;;
+			1)
+				name="Erase Data Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/erasedata-3.6.tar.gz"
+				file="erasedata-3.6.tar.gz"
+				desc="This plugin adds a context menu item to the right click menu which allows you\n to delete data."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginErasedata"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			2)
+				name="Create Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/create-3.6.tar.gz"
+				file="create-3.6.tar.gz"
+				desc="This plugin allows for the creation of new .torrent files from a file or\n directory of files."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginCreate"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			3)
+				name="Trafic Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/trafic-3.6.tar.gz"
+				file="trafic-3.6.tar.gz"
+				desc="The Trafic plugin is a subsystem for monitoring rtorrent traffic totals.\n It tracks both system wide and per-tracker totals.\n The plugin can display totals in three formats: hourly, daily, and mouthly.\n Statistics can be cleaned out at any time by clicking the 'Clear' button."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginTrafic"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			4)
+				name="RSS Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/rss-3.6.tar.gz"
+				file="rss-3.6.tar.gz"
+				desc="This plugin is designed to fetch torrents via RSS download links.\n It has 2 main parts, one for entering feeds and one for setting up filters.\n For more information about rss, see http://en.wikipedia.org/wiki/RSS."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginRSS"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			5)
+				name="Edit Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/edit-3.6.tar.gz"
+				file="edit-3.6.tar.gz"
+				desc="This plugin allows you to edit the list of trackers, and change the comment\n of the current torrent.\n After installation, a new context menu item will become available when you\n right click a torrent from the list: 'Edit Torrent...'"
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginEdit"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			6)
+				name="Retrackers Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/retrackers-3.6.tar.gz"
+				file="retrackers-3.6.tar.gz"
+				desc="This plugin appends specified trackers to the trackers list of all newly\n added torrents.\n By the way, torrents may be added by any way - not just via ruTorrent."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginRetrackers"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			7)
+				name="Throttle Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/throttle-3.6.tar.gz"
+				file="throttle-3.6.tar.gz"
+				desc="Throttle plugin gives a convenient control over the possibility to set limits\n of speed for groups of torrents.\n After this plugin is installed a new option 'Channels' will appear in\n the Settings dialog.\n Speed limits for some channels can be set here. (by default - 10)\n Assignment of channel number for a particular torrent or for a group of\n torrents can be made in it's contextual menu.\n Note - The '0' value conventionally for rTorrent, means 'no limits'.\n So the lowest possible limit is 1 Kbps."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginThrottle"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			8)
+				name="Cookies Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/cookies-3.6.tar.gz"
+				file="cookies-3.6.tar.gz"
+				desc="Some trackers use cookies for the client authentication.\n It is transparent to user who uses a browser to work with such servers,\n cause browser store these cookies and returns them to the server automatically.\n The user just needs to enter login/password from time to time."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginCookies"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			9)
+				name="Scheduler v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/scheduler-3.6.tar.gz"
+				file="scheduler-3.6.tar.gz"
+				desc="You can enable a scheduler to define a max of six rTorrent behavior types\n at each particular hour of 168 week hours."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginScheduler"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			10)
+				name="Auto Tools Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/autotools-3.6.tar.gz"
+				file="autotools-3.6.tar.gz"
+				desc="The plugin provides some possibilities on automation.\n Following functions are realized for now:\n Auto Label, automatic creation of labels at addition of new torrent through\n the web interface.\n Auto Move: automatic transferring of torrent data files to other directory\n on downloading completion.\n Auto Watch: automatic adding torrents via nested set of\n watch directories."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginAutotools"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			11)
+				name="Data Dir Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/datadir-3.6.tar.gz"
+				file="datadir-3.6.tar.gz"
+				desc="The plugin is intended for replacement of the current torrent data directory\n on another.\n Such operation is required, for example if the torrent data directory\n has been moved manually.\n It is also possible to move downloaded torrent's data.\n After plugin installation there will be a new item 'Save to...' in the context\n menu of the downloading area which shows a dialogue 'Torrent data directory'.\n In this dialogue you can specify a new path to the torrent data."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginDataDir"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			12)
+				name="Track Lables Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/tracklabels-3.6.tar.gz"
+				file="tracklabels-3.6.tar.gz"
+				desc="The plug-in adds a set of labels on the category panel.\n These labels are created automatically on the basis of torrent's trackers."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginTracklabels"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			13)
+				name="Geo IP Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/geoip-3.6.tar.gz"
+				file="geoip-3.6.tar.gz"
+				desc="Packages 'GeoLiteCity' and 'php5-geoip' is needed. \n For details about installation and configuration of GeoIP PHP extension,\n please visit: http://us3.php.net/manual/en/book.geoip.php"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginGeoIP"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="geoip"; fi
+				;;
+			14)
+				name="Ratio Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/ratio-3.6.tar.gz"
+				file="ratio-3.6.tar.gz"
+				desc="This plugin allows to manage ratio limits for groups of torrents, conveniently.\n When the plugin is installed a new section 'Ratio groups' appears\n in the Settings dialog.\n Here user can define limits of ratio for some groups. (by default - 8)\n Assignation of group to one or several torrents is performed by selecting\n an appropriate option in the context menu of torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRatio"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			15)
+				name="Show Peers like wTorrent Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/show_peers_like_wtorrent-3.6.tar.gz"
+				file="show_peers_like_wtorrent-3.6.tar.gz"
+				desc="The plugin changes the format of values in columns 'Seeds' and 'Peers'\n in the torrents list."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginShow_peers_like_wtorrent"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			16)
+				name="Seeding Time Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/seedingtime-3.6.tar.gz"
+				file="seedingtime-3.6.tar.gz"
+				desc="The plugin adds the columns 'Finished' and 'Added' to the torrents list.\n This columns contains the time when download of the torrent was completed and\n accordingly, the time when torrent was added."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginSeedingtime"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			17)
+				name="HTTPRPC Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/httprpc-3.6.tar.gz"
+				file="httprpc-3.6.tar.gz"
+				desc="This plugin is designed as a easy to use replacement for the mod_scgi\n (or similar) webserver module, with emphasis on extremely low bandwidth use.\n If you install this plugin, you do not need to use mod_scgi or the RPC Plugin.\n Note: This plugin requires a faster server, and is not recommended for embedded\n systems, like a router or slow computer."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginHTTPRPC"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			18)
+				name="Diskspace Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/diskspace-3.6.tar.gz"
+				file="diskspace-3.6.tar.gz"
+				desc="This plugin adds an easy to read disk meter to the bottom menu bar."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginDiskspace"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			19)
+				name="Unpack Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/unpack-3.6.tar.gz"
+				file="unpack-3.6.tar.gz"
+				desc="Packages 'unrar-free' is needed.\n This plugin is designed to manually or automatically unrar/unzip torrent data."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginUnpack"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="unrar"; fi
+			;;
+			20)
+				name="Get Dir Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/_getdir-3.6.tar.gz"
+				file="_getdir-3.6.tar.gz"
+				desc="The service plugin _getdir gives to other plugins the possibility of\n comfortable navigation on a host file system.\n Shows only directories to which rtorrent can write and which php can show."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_getdir"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			21)
+				name="Source Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/source-3.6.tar.gz"
+				file="source-3.6.tar.gz"
+				desc="This plugin adds a 'Get .torrent' item to the right click context menu.\n Allowing you to download the original .torrent file from the server,\n to your local machine."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginSource"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			22)
+				name="Chunks Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/chunks-3.6.tar.gz"
+				file="chunks-3.6.tar.gz"
+				desc="This plugin adds a new tab to the tab bar called 'chunks'.\n The added tab allows you to monitor the download status of each individual\n torrent 'piece'"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginChunks"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			23)
+				name="Data Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/data-3.6.tar.gz"
+				file="data-3.6.tar.gz"
+				desc="This plugin adds the 'Get Data' item to the right click menu.\n This allows you to download the file in question via http to your\n local machine.\n On 32 bit systems, you can not download files larger than 2 GB, this is due\n to a php limitation"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginData"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			24)
+				name="CPU Load Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/cpuload-3.6.tar.gz"
+				file="cpuload-3.6.tar.gz"
+				desc="This plugin adds a CPU Load usage bar to the bottom toolbar."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginCpuload"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			25)
+				name="Extsearch Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/extsearch-3.6.tar.gz"
+				file="extsearch-3.6.tar.gz"
+				desc="This plugin adds the ability to search many popular torrent sites for content\n without leaving the rutorrent url."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginExtsearch"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			26)
+				name="Theme Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/theme-3.6.tar.gz"
+				file="theme-3.6.tar.gz"
+				desc="This plugin allows you to change the gui theme to one of several provided\n themes, or any your create, provided they are placed in the proper\n directory within the plugin."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginTheme"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			27)
+				name="Login Mgr v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/loginmgr-3.6.tar.gz"
+				file="loginmgr-3.6.tar.gz"
+				desc="This plugin is used to login to 3rd party torrent sites.\n It's designed to be used in cased where cookies fail.\n It is a support plugin used for RSS and ExtSearch.\n Note: This plugin saves passwords in plain text."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginLoginMgr"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			28)
+				name="Loot At v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/lookat-3.6.tar.gz"
+				file="lookat-3.6.tar.gz"
+				desc="This plugin is intended for looking torrent's name in the external sources."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginLookAt"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			29)
+				name="NFO Plugin"
+				url="http://srious.biz/nfo.tar.gz"
+				file="nfo.tar.gz"
+				desc="This plugin shows the contents of the .nfo file for a given torrent."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginNFO"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			30)
+				name="Chat Plugin v2.0"
+				url="http://rutorrent-chat.googlecode.com/files/chat-2.0.tar.gz"
+				file="chat-2.0.tar.gz"
+				desc="This plugin adds a chatbox to multi-user rutorrent installs.\n Note: Currently this is a single server chat program only\n (if you have multiple servers, this will NOT allow\n your users to chat across them)."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginChat"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			31)
+				name="Logoff Plugin v1.3"
+				url="http://rutorrent-logoff.googlecode.com/files/logoff-1.3.tar.gz"
+				file="logoff-1.3.tar.gz"
+				desc="This plugin allows you to switch users or logoff on systems which\n use authentication."
+				homepage="https://github.com/Novik/rutorrent-logoff/"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			32)
+				name="Pause Plugin v1.2"
+				url="http://rutorrent-pausewebui.googlecode.com/files/pausewebui.1.2.zip"
+				file="pausewebui.1.2.zip"
+				desc="Plugin to pause the refresh timer, and add a button to manually refresh\n the page."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginPause"
+				unpack="unzip $file -d $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			33)
+				name="Instant Search Plugin v1.0"
+				url="http://rutorrent-instantsearch.googlecode.com/files/instantsearch.1.0.zip"
+				file="instantsearch.1.0.zip"
+				desc="This plugin lets you search for local torrents running in rutorrent,\n updating results as you type them."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginInstantSearch"
+				unpack="unzip $file -d $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			34)
+				name="File Drop v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/filedrop-3.6.tar.gz"
+				file="filedrop-3.6.tar.gz"
+				desc="This plugin allows users to drag multiple torrents from desktop to the\n browser (FF > 3.6 & Chrome only)."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginFileDrop"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			35)
+				name="Check Port v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/check_port-3.6.tar.gz"
+				file="check_port-3.6.tar.gz"
+				desc="This plugin adds an incoming port status indicator to the bottom bar."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginCheckPort"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			36)
+				name="History v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/history-3.6.tar.gz"
+				file="history-3.6.tar.gz"
+				desc="This plugin is designed to log a history of torrents."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginHistory"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			37)
+				name="iPad Plugin v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/ipad-3.6.tar.gz"
+				file="ipad-3.6.tar.gz"
+				desc="This plugin allows ruTorrent to work properly on iPad-like devices."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginIPad"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			38)
+				name="Extended Ratio v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/extratio-3.6.tar.gz"
+				file="extratio-3.6.tar.gz"
+				desc="This plugin extends the functionality of the ratio plugin."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginExtRatio"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			39)
+				name="Feeds v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/feeds-3.6.tar.gz"
+				file="feeds-3.6.tar.gz"
+				desc="This plugin is intended for making RSS feeds with information of torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginFeeds"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			40)
+				name="Media Information v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/mediainfo-3.6.tar.gz"
+				file="mediainfo-3.6.tar.gz"
+				desc="This plugin is intended to display media file information."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginMediainfo"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="mediainfo"; fi
+				;;
+			41)
+				name="RSS URL Rewrite v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/rssurlrewrite-3.6.tar.gz"
+				file="rssurlrewrite-3.6.tar.gz"
+				desc="This plugin extends the functionality of the RSS plugin."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRSSURLRewrite"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			42)
+				name="Screenshot v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/screenshots-3.6.tar.gz"
+				file="screenshots-3.6.tar.gz"
+				desc="Packages 'ffmpeg' is needed.\n This plugin is intended to show screenshots from video files."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginScreenshots"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="ffmpeg"; fi
+				;;
+			43)
+				name="RPC v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/rpc-3.6.tar.gz"
+				file="rpc-3.6.tar.gz"
+				desc="This plugin is a replacement for the mod_scgi webserver module."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRPC"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			44)
+				name="Rutracker Check v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/rutracker_check-3.6.tar.gz"
+				file="rutracker_check-3.6.tar.gz"
+				desc="This plugin checks the rutracker.org tracker for updated/deleted torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRutracker_check"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			45)
+				name="Noty v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/_noty-3.6.tar.gz"
+				file="_noty-3.6.tar.gz"
+				desc="This plugin provides the notification functionality for other plugins."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_noty"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			46)
+				name="Task v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz"
+				file="_task-3.6.tar.gz"
+				desc="This plugin provides the possibility of running various scripts\n on the host system."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_task"
+				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
+				;;
+			47)
+				name="All Plugins v3.6"
+				url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
+				file="plugins-3.6.tar.gz"
+				desc="This installs about 40+ plugins except plugins numbers 29 to 33\n (NFO, Chat, Logoff, Pause and Instant Search).\n All dependencies will be installed. \n ${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugins"
+				unpack="tar -zxvf $file -C /tmp/"
+				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="all"; fi
+				;;
+			q|Q)
+				break
+				;;
+			*)
+				count=0
+				echo
+				error="${RED}Not a usable number!${NORMAL}"
+				echo
+				;;
+		esac
+	done
+}
+
+function INSTALL_COMPLETE {
+if [ -d "$TEMP_PLUGIN_DIR" ]; then rm -rf $TEMP_PLUGIN_DIR; fi
+	
+	HEADER
+	echo "${GREEN} Installation is complete${NORMAL}"
+	echo
+	echo " ${NORMAL}${BOLD} Plugins installed:${NORMAL}${GREEN}"
+	LIST_PLUGINS
+	echo
+	echo "${PURPLE} Is required to refresh the rutorrent page on your browser \ntoo, to see the installed plugins.${NORMAL}"
+	echo
+}
+
+CHECK_ROOT
+LICENSE
+if [ -d "$TEMP_PLUGIN_DIR" ]; then rm -rf $TEMP_PLUGIN_DIR; fi
+HEADER
+CHECK_PLUGINS_FOLDER
+
+# NOTICE: Change lib, rtorrent, rutorrent versions when update are available
+while true; do
+	HEADER
+	echo " ${NORMAL}ruTorrent plugins: ${BOLD}${GREEN}" && LIST_PLUGINS
+	echo
+	echo " [1] - Download plugins"
+	echo " [2] - Install plugins"
+	echo
+	echo " [q] - Quit"
+	echo
+	echo -n "${GREEN}>>${NORMAL} "
+	read case
+
+	case "$case" in
+		1)
+			SELECT_PLUGINS
+			;;
+		2)
+			INSTALL_PLUGIN
+			INSTALL_COMPLETE
+			break
+			;;
+		q|Q)
+			break
+			;;
+	esac
+done
