@@ -135,7 +135,7 @@ Plugin Installation only
 Exist a script that install only plugin, this is for the peoples then want to install some plugins instead to reinstall xmlrpc-c, libtorrent and rtorrent.
 
 Actual version for the script: 
-- **3.0**
+- **3.1**
 
 Download the script. Remember to change the X.X to the actual version.
 
