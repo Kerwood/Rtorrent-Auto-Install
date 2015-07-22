@@ -45,8 +45,8 @@ function CHECK_PLUGINS_FOLDER {
 				echo
 				echo -e "${RED} Error! This folder does not exits.${NORMAL}"
 				echo
-				echo " Is possible to create it, if you want."
-				read -p " You want to create $DIR?" -n 1
+				echo " It's possible to create the folder."
+				read -p " Do you want to create $DIR folder ?" -n 1
 				if [[ $REPLY =~ [Yy]$ ]]; then
 					count=1
 					mkdir -vp $DIR
@@ -56,7 +56,7 @@ function CHECK_PLUGINS_FOLDER {
 					CHECK_PLUGINS_FOLDER
 				else
 					count=0
-					error="${RED} Can't understand your choise!${NORMAL}"
+					error="${RED} Can't understand your choice !${NORMAL}"
 				fi
 			done
 		fi
@@ -110,7 +110,7 @@ function DOWNLOAD_PLUGIN {
 	echo
 	echo " Info at $homepage"
 	echo
-	read -p " You want to download it [y/n]: " -n 1
+	read -p " Do you want to download it [y/n]: " -n 1
 
 	if [[ $REPLY =~ [Yy]$ ]]; then
 		if [[ $PLUGIN_NEEDS == "geoip" ]]; then
