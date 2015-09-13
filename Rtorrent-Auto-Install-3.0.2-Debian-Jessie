@@ -275,6 +275,7 @@ function SELECT_PLUGINS {
 				file="rss-3.6.tar.gz"
 				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS. \nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
+				DOWNLOAD_PLUGIN
 				;;
 
 			5)
