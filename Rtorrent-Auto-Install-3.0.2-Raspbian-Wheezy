@@ -37,7 +37,7 @@ function CHECK_ROOT {
 }
 
 # Checks is apache2-utils is installed. Its is needed to make the Web user
-function APACHE-UTILS {
+function APACHE_UTILS {
 	AP_UT_CHECK="$(dpkg-query -W -f='${Status}' apache2-utils 2>/dev/null | grep -c "ok installed")"
 	UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
 
@@ -671,7 +671,7 @@ function INSTALL_RTORRENT {
 	curl -L http://sourceforge.net/projects/xmlrpc-c/files/latest/download -o xmlrpc-c-latest.tgz
 	tar zxvf xmlrpc-c-latest.tgz
 	mv xmlrpc-c-1.* xmlrpc
-	cd xmlrpc-c
+	cd xmlrpc
 	./configure --disable-cplusplus
 	make
 	make install
