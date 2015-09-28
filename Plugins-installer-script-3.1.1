@@ -36,16 +36,16 @@ function CHECK_PLUGINS_FOLDER {
 	echo -n " Leave blank for default [/var/www/rutorrent/plugins]: "
 	read DIR
 
-	if [ -z "$DIR" ]; then
+	if [[ -z "$DIR" ]]; then
 		PLUGINS_DIR="/var/www/rutorrent/plugins"
 	else
 		count=0
 		while [ $count -eq 0 ]; do
-			if [ ! -d "$DIR" ]; then
+			if [[ ! -d $DIR ]]; then
 				echo
-				echo -e "${RED} Error! This folder does not exits.${NORMAL}"
+				echo -e "${RED} Error! This folder not exits.${NORMAL}"
 				echo
-				echo " It's possible to create the folder."
+				echo " It's possible to create it."
 				read -p " Do you want to create $DIR folder ?" -n 1
 				if [[ $REPLY =~ [Yy]$ ]]; then
 					count=1
@@ -76,14 +76,13 @@ function LICENSE {
 	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 	echo
 	read -p " Press any key to continue..." -n 1
-	echo
 }
 
 # Header for the menu
 function HEADER {
 	clear
 	echo "${BOLD}--------------------------------------------------------------------------------"
-	echo "                  Web Server + Rtorrent + Rutorrent Auto Install"
+	echo "                  Web Server + rTorrent + ruTorrent Auto Install"
 	echo "                        ${LBLUE}Patrick Kerwood @ LinuxBloggen.dk${NORMAL}"
 	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 }
@@ -112,44 +111,45 @@ function DOWNLOAD_PLUGIN {
 	echo
 	read -p " Do you want to download it [y/n]: " -n 1
 
-	if [[ $REPLY =~ [Yy]$ ]]; then
-		if [[ $PLUGIN_NEEDS == "geoip" ]]; then
-			wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+	if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+		if [[ $PLUGIN_NEEDS -eq "geoip" ]]; then
+			curl -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
 			mkdir -v /usr/share/GeoIP
 			gunzip GeoLiteCity.dat.gz
 			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
 			rm GeoLiteCity.dat.gz
 			apt-get -y install php5-geoip
-		elif [[ $PLUGIN_NEEDS == "unrar" ]]; then
+		elif [[ $PLUGIN_NEEDS -eq "unrar" ]]; then
 			apt-get -y install unrar-free
-		elif [[ $PLUGIN_NEEDS == "mediainfo" ]]; then
+		elif [[ $PLUGIN_NEEDS -eq "mediainfo" ]]; then
+			curl -O http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
+			rm _task-3.6.tar.gz
 			apt-get -y install libzen0 libmediainfo0 mediainfo
-			wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+		elif [[ $PLUGIN_NEEDS -eq "ffmpeg" ]]; then
+			curl -O http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
 			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
 			rm _task-3.6.tar.gz
-		elif [[ $PLUGIN_NEEDS == "ffmpeg" ]]; then
 			apt-get -y install ffmpeg
-			wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
-			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
-			rm _task-3.6.tar.gz
-		elif [[ $PLUGIN_NEEDS == "all" ]]; then
-			# for geoip
-			wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+		elif [[ $PLUGIN_NEEDS -eq "all" ]]; then
+			curl -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
 			mkdir -v /usr/share/GeoIP
 			gunzip GeoLiteCity.dat.gz
 			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
 			rm GeoLiteCity.dat.gz
-
 			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
 			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo unrar-free
 		else
-			PLUGIN_NEEDS=""
+		 if [[ ! -z $PLUGIN_NEEDS ]]; then
+		 	PLUGIN_NEEDS=""
+		 fi
 		fi
 
 		echo
-		wget "$url"
+		curl -O "$url"
 		$unpack
-		if [ $? -eq "0" ]; then
+
+		if [[ $? -eq "0" ]]; then
 			rm "$file"
 			echo
 			PLUGIN_ARRAY+=("${name}")
@@ -169,20 +169,21 @@ function DOWNLOAD_PLUGIN {
 
 function INSTALL_PLUGIN {
 	# Move plugins to rutorrent folder
-	if [ -d "$TEMP_PLUGIN_DIR" ]; then mv -fv "$TEMP_PLUGIN_DIR"/* $PLUGINS_DIR; fi
+	if [[ -d $TEMP_PLUGIN_DIR ]]; then mv -fv "$TEMP_PLUGIN_DIR"/* "$PLUGINS_DIR"; fi
 
 	# Changing permissions for moved folder and plugins
-	chown -R www-data:www-data $PLUGINS_DIR
-	chmod -R 775 $PLUGINS_DIR
+	chown -R www-data:www-data "$PLUGINS_DIR"
+	chmod -R 775 "$PLUGINS_DIR"
 }
 
 function SELECT_PLUGINS {
-	if [ ! -d "$TEMP_PLUGIN_DIR" ]; then mkdir $TEMP_PLUGIN_DIR; fi
+	if [[ ! -d $TEMP_PLUGIN_DIR ]]; then mkdir $TEMP_PLUGIN_DIR; fi
 	count=0
 
 	while true;	do
 		while [ $count -eq 0 ]; do
 			clear
+			count=1
 			echo "${GREEN}-----------------------------------| ${BOLD}Page 1${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
 			echo " [1] - Erase Data ${GREEN}[recommended]${NORMAL}"
 			echo " [2] - Create v3.6"
@@ -199,7 +200,6 @@ function SELECT_PLUGINS {
 			echo " [13] - Geo IP v3.6"
 			echo " [14] - Ratio v3.6 ${GREEN}[recommended]${NORMAL}"
 			echo " [15] - Show Peers like wTorrent v3.6"
-			count=1
 		done
 		echo
 		echo " [p1-3] - Change plugin page"
@@ -218,6 +218,7 @@ function SELECT_PLUGINS {
 				;;
 			p2)
 				clear
+				count=1
 				echo "${GREEN}-----------------------------------| ${BOLD}Page 2${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
 				echo " [16] - Seeding Time v3.6 ${GREEN}[recommended]${NORMAL}"
 				echo " [17] - HTTPRPC v3.6"
@@ -235,10 +236,10 @@ function SELECT_PLUGINS {
 				echo " [29] - NFO ${GREEN}[recommended]${NORMAL}"
 				echo " [30] - Chat v2.0"
 				echo " [31] - Logoff v1.3"
-				count=1
 				;;
 			p3)
 				clear
+				count=1
 				echo "${GREEN}-----------------------------------| ${BOLD}Page 3${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
 				echo " [32] - Pause v1.2"
 				echo " [33] - Instant Search v1.0"
@@ -256,7 +257,6 @@ function SELECT_PLUGINS {
 				echo " [45] - Noty v3.6"
 				echo " [46] - Task v3.6"
 				echo " [47] - All Plugins v3.6. More info at http://git.io/vtDfb"
-				count=1
 				;;
 			1)
 				name="Erase Data Plugin v3.6"
@@ -373,7 +373,8 @@ function SELECT_PLUGINS {
 				desc="Packages 'GeoLiteCity' and 'php5-geoip' is needed. \n For details about installation and configuration of GeoIP PHP extension,\n please visit: http://us3.php.net/manual/en/book.geoip.php"
 				homepage="https://github.com/Novik/rutorrent/wiki/PluginGeoIP"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="geoip"; fi
+				PLUGIN_NEEDS="geoip"
+				DOWNLOAD_PLUGIN
 				;;
 			14)
 				name="Ratio Plugin v3.6"
@@ -427,7 +428,8 @@ function SELECT_PLUGINS {
 				desc="Packages 'unrar-free' is needed.\n This plugin is designed to manually or automatically unrar/unzip torrent data."
 				homepage="https://github.com/Novik/rutorrent/wiki/PluginUnpack"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="unrar"; fi
+				PLUGIN_NEEDS="unrar"
+				DOWNLOAD_PLUGIN
 			;;
 			20)
 				name="Get Dir Plugin v3.6"
@@ -616,7 +618,8 @@ function SELECT_PLUGINS {
 				desc="This plugin is intended to display media file information."
 				homepage="https://github.com/Novik/rutorrent/wiki/PluginMediainfo"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="mediainfo"; fi
+				PLUGIN_NEEDS="mediainfo"
+				DOWNLOAD_PLUGIN
 				;;
 			41)
 				name="RSS URL Rewrite v3.6"
@@ -634,7 +637,8 @@ function SELECT_PLUGINS {
 				desc="Packages 'ffmpeg' is needed.\n This plugin is intended to show screenshots from video files."
 				homepage="https://github.com/Novik/rutorrent/wiki/PluginScreenshots"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="ffmpeg"; fi
+				PLUGIN_NEEDS="ffmpeg"
+				DOWNLOAD_PLUGIN
 				;;
 			43)
 				name="RPC v3.6"
@@ -679,7 +683,8 @@ function SELECT_PLUGINS {
 				desc="This installs about 40+ plugins except plugins numbers 29 to 33\n (NFO, Chat, Logoff, Pause and Instant Search).\n All dependencies will be installed. \n ${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
 				homepage="https://github.com/Novik/rutorrent/wiki/Plugins"
 				unpack="tar -zxvf $file -C /tmp/"
-				if DOWNLOAD_PLUGIN; then PLUGIN_NEEDS="all"; fi
+				PLUGIN_NEEDS="all"
+				DOWNLOAD_PLUGIN
 				;;
 			q|Q)
 				break
@@ -695,7 +700,7 @@ function SELECT_PLUGINS {
 }
 
 function INSTALL_COMPLETE {
-if [ -d "$TEMP_PLUGIN_DIR" ]; then rm -rf $TEMP_PLUGIN_DIR; fi
+if [[ -d $TEMP_PLUGIN_DIR ]]; then rm -rf "$TEMP_PLUGIN_DIR"; fi
 	
 	HEADER
 	echo "${GREEN} Installation is complete${NORMAL}"
@@ -709,7 +714,7 @@ if [ -d "$TEMP_PLUGIN_DIR" ]; then rm -rf $TEMP_PLUGIN_DIR; fi
 
 CHECK_ROOT
 LICENSE
-if [ -d "$TEMP_PLUGIN_DIR" ]; then rm -rf $TEMP_PLUGIN_DIR; fi
+if [[ -d $TEMP_PLUGIN_DIR ]]; then rm -rf "$TEMP_PLUGIN_DIR"; fi
 HEADER
 CHECK_PLUGINS_FOLDER
 
@@ -723,7 +728,7 @@ while true; do
 	echo
 	echo " [q] - Quit"
 	echo
-	echo -n "${GREEN}>>${NORMAL} "
+	echo -n "${BOLD}${GREEN}>>${NORMAL} "
 	read case
 
 	case "$case" in
