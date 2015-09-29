@@ -11,8 +11,8 @@ RED=$(tput setaf 1)
 PURPLE=$(tput setaf 5)
 
 # NOTICE: Change rtorrent, libtorrent, rutorrent versions when update are available
-RTORRENT_VERSION="0.9.4"
-LIBTORRENT_VERSION="0.13.4"
+RTORRENT_VERSION="0.9.6"
+LIBTORRENT_VERSION="0.13.6"
 RUTORRENT_VERSION="3.6"
 
 # Used for choose what version of xmlrpc is installed
@@ -53,8 +53,17 @@ WEB_USER=""
 # Array with webusers including their hashed paswords
 WEB_USER_ARRAY=()
 
+# Used for switch temp dirs to new one
+NEW_DIR=""
+
+# Temporary install folder for compiling
+TEMP_INSTALL_DIR="/tmp"
+
 # Temporary download folder for plugins
 TEMP_PLUGIN_DIR="/tmp/rutorrentPlugins"
+
+# Variable to understand what is needed for make a plugin work
+PLUGIN_NEEDS=""
 
 # Array of downloaded plugins
 PLUGIN_ARRAY=()
@@ -64,35 +73,9 @@ RTORRENT_HOME_DIR=""
 
 # Function to check if running user is root
 function CHECK_ROOT {
-	if [ $(id -u) != "0" ]; then
-		echo "Error: You must be root to run this script, please use a root user to continue." 1>&2
+	if [[ "$(id -u)" != "0" ]]; then
+		echo "Error! You must be a root user to run this script,\n please use any root user to continue." 1>&2
 		exit 1
-	fi
-}
-
-# Check if apache2 is installed and remove or disable it
-function CHECK_APACHE_INST {
-	APACHE2_CHECK="$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")"
-
-	if [ "$APACHE2_CHECK" -eq 1 ]; then
-		echo -e " Apache2 is installed on this system, for avoid errors is required to unistall it\n or just remove the service from start at boot."
-		echo
-		read -p " Do you want to remove the service from start at boot? [y/n] " -n 1
-		if [[ $REPLY =~ [Yy]$ ]]; then
-			service apache2 stop >> /dev/null
-			update-rc.d -f apache2 remove >> /dev/null
-			clear
-
-			echo " Apache2 service is removed from init.d"
-			echo " ${BOLD}This step is completely optional and not required for continue${NORMAL}"
-			echo
-			read -p " Do you want to complete uninstall apache2 and related packages? [y/n] " -n 1
-			if [[ $REPLY =~ [Yy]$ ]]; then
-				clear
-				apt-get -y purge apache2
-				apt-get -y autoremove
-			fi
-		fi
 	fi
 }
 
@@ -101,71 +84,39 @@ function CHECK_APACHE_INST {
 # http://elinux.org/RPi_HardwareHistory#Board_Revision_History
 # http://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
 function CHECK_RPI_VERSION {
-	# This is for found the revision for RPI
-	HW_REVISION="$(grep Revision /proc/cpuinfo | cut -d " " -f 2)"
+	# This is for detect more board, like Banana Pi and similar
+	HW_FAMILY_SOC="$(grep Hardware /proc/cpuinfo | cut -d " " -f 2)"
+	# This is for found the revision for mini boards
+	HW_SOC_REVISION="$(grep Revision /proc/cpuinfo | cut -d " " -f 2)"
 	
-	if [ $HW_REVISION == '0002' -o $HW_REVISION == '0003' ]; then
-		RPI_VERSION="B rev. 1.0 - 256MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == '0004' -o $HW_REVISION == '0005' -o $HW_REVISION == '0006' ]; then
-		RPI_VERSION="B rev. 2.0 - 256MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == '0007' -o $HW_REVISION == '0008' -o $HW_REVISION == '0009' ]; then
-		RPI_VERSION="A rev. 2.0 - 256MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == '000d' -o $HW_REVISION == '000e' -o $HW_REVISION == '000f' ]; then
-		RPI_VERSION="B rev. 2.0 - 512MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == '0010' ]; then
-		RPI_VERSION="B+ rev. 1.0 - 512MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == '0012' ]; then
-		RPI_VERSION="A+ rev. 1.0 - 256MB"
-		COMPILE_FLAGS=1
-	elif [ $HW_REVISION == 'a01041' -o $HW_REVISION == 'a21041' ]; then
-		RPI_VERSION="2 B - 1GB"
-		COMPILE_FLAGS=2
+	if [[ $HW_FAMILY_SOC == "BCM2708" ]]; then
+		if [[ $HW_SOC_REVISION == "0002" || $HW_SOC_REVISION == "0003" ]]; then
+			RASPBERRY_VERSION="B rev. 1.0 - 256MB RAM"
+			COMPILE_FLAGS=1
+		elif [[ $HW_SOC_REVISION == "0004" || $HW_SOC_REVISION == "0005" || $HW_SOC_REVISION == "0006" ]]; then
+			RASPBERRY_VERSION="B rev. 2.0 - 256MB RAM"
+			COMPILE_FLAGS=1
+		elif [[ $HW_SOC_REVISION == "0007" || $HW_SOC_REVISION == "0008" || $HW_SOC_REVISION == "0009" ]]; then
+			RASPBERRY_VERSION="A rev. 2.0 - 256MB RAM"
+			COMPILE_FLAGS=1
+		elif [[ $HW_SOC_REVISION == "000d" || $HW_SOC_REVISION == "000e" || $HW_SOC_REVISION == "000f" ]]; then
+			RASPBERRY_VERSION="B rev. 2.0 - 512MB RAM"
+			COMPILE_FLAGS=1
+		elif [[ $HW_SOC_REVISION == "0010" ]]; then
+			RASPBERRY_VERSION="B+ rev. 1.0 - 512MB RAM"
+			COMPILE_FLAGS=1
+		elif [[ $HW_SOC_REVISION == "0012" ]]; then
+			RASPBERRY_VERSION="A+ rev. 1.0 - 256MB RAM"
+			COMPILE_FLAGS=1
+		fi
+	elif [[ $HW_FAMILY_SOC == "BCM2709" ]]; then
+		if [[ $HW_SOC_REVISION == "a01041" || $HW_SOC_REVISION == "a21041" ]]; then
+			RASPBERRY_VERSION="2 B - 1GB RAM"
+			COMPILE_FLAGS=2
+		fi
 	else
-		RPI_VERSION="Unknown"
+		RASPBERRY_VERSION="Unknown"
 		COMPILE_FLAGS=0
-	fi
-}
-
-# Checks for apache2-utils and unzip if it's installed. It's needed to make the WebUI user/s
-function WEB_USER_UTILS {
-	AP_UT_CHECK="$(dpkg-query -W -f='${Status}' apache2-utils 2>/dev/null | grep -c "ok installed")"
-	UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
-
-	if [ "$AP_UT_CHECK" -ne 1 ] && [ "$UNZIP_CHECK" -ne 1 ]; then
-		echo " Both packages apache2-utils and unzip is not installed and is needed for continue."
-		read -p " Do you want to install it? [y/n] " -n 1
-		if [[ $REPLY =~ [Yy]$ ]]; then
-			clear
-			apt-get -y install apache2-utils unzip
-		else
-			clear
-			exit
-		fi
-	elif [ "$AP_UT_CHECK" -ne 1 ]; then
-		echo " Package apache2-utils is not installed and is needed for the setup."
-		read -p " Do you want to install it? [y/n] " -n 1
-		if [[ $REPLY =~ [Yy]$ ]]; then
-			clear
-			apt-get -y install apache2-utils
-		else
-			clear
-			exit
-		fi
-	elif [ "$UNZIP_CHECK" -ne 1 ]; then
-		echo " Package unzip is not installed and is needed for the setup."
-		read -p " Do you want to install it? [y/n] " -n 1
-		if [[ $REPLY =~ [Yy]$ ]]; then
-			clear
-			apt-get -y install unzip
-		else
-			clear
-			exit
-		fi
 	fi
 }
 
@@ -182,28 +133,300 @@ function LICENSE {
 	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 	echo
 	read -p " Press any key to continue..." -n 1
-	echo
+}
+
+# Check if apache2 is installed and remove or disable it
+function CHECK_APACHE_INST {
+	count=0
+
+	while [ $count -eq 0 ]; do
+		APACHE_CHECK="$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")"
+
+		if [[ $APACHE2_CHECK -eq 1 ]; then
+			echo -e " Apache2 is installed on this system, for avoid errors is required to unistall it\n or just remove the service from start at boot."
+			echo
+			read -p " Do you want to remove the service from start at boot? [Y/n] " -n 1
+			if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+				service apache2 stop >> /dev/null
+				update-rc.d -f apache2 remove >> /dev/null
+				clear
+
+				echo " Apache2 service is removed from init.d"
+				echo " ${BOLD}This step is completely optional and not required for continue${NORMAL}"
+				echo
+				read -p " Do you want to complete uninstall apache2 and related packages? [Y/n] " -n 1
+				if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+					count=1
+					clear
+					apt-get -y purge apache2
+					apt-get -y autoremove
+				elif [[ $REPLY =~ [Nn]$ ]]; then
+					count=1
+				else
+					error="${RED} Can't understand your choise!${NORMAL}"
+				fi
+			elif [[ $REPLY =~ [Nn]$ ]]; then
+				count=1
+			else
+				error="${RED} Can't understand your choise!${NORMAL}"
+			fi
+		else
+			count=1
+		fi
+	done
+}
+
+# Checks for apache2-utils and unzip if it's installed. It's needed to make the WebUI user/s
+function WEB_USER_UTILS {
+	count=0
+
+	while [ $count -eq 0 ]; do
+		AP_UT_CHECK="$(dpkg-query -W -f='${Status}' apache2-utils 2>/dev/null | grep -c "ok installed")"
+		UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
+		HEADER
+
+		if [[ $AP_UT_CHECK -ne 1 && $UNZIP_CHECK -ne 1 ]]; then
+			echo " Both packages \"apache2-utils\" and \"unzip\" is not installed and is needed for continue."
+			echo -e $error
+			unset error
+			read -p " Do you want to continue? [Y/n] " -n 1
+			if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+				clear
+				apt-get -y install apache2-utils unzip
+				count=1
+			elif [[ $REPLY =~ [Nn]$ ]]; then
+				exit
+			else
+				error="${RED} Can't understand your choise!${NORMAL}"
+			fi
+		elif [[ $AP_UT_CHECK -ne 1 ]]; then
+			echo " Package \"apache2-utils\" is not installed and is needed for continue."
+			echo -e $error
+			unset error
+			read -p " Do you want to continue? [Y/n] " -n 1
+			if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+				clear
+				apt-get -y install apache2-utils
+				count=1
+			elif [[ $REPLY =~ [Nn]$ ]]; then
+				exit
+			else
+				error="${RED} Can't understand your choise!${NORMAL}"
+			fi
+		elif [[ $UNZIP_CHECK -ne 1 ]]; then
+			echo " Package \"unzip\" is not installed and is needed for continue."
+			echo -e $error
+			unset error
+			read -p " Do you want to continue? [Y/n] " -n 1
+			if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+				clear
+				apt-get -y install unzip
+				count=1
+			elif [[ $REPLY =~ [Nn]$ ]]; then
+				exit
+			else
+				error="${RED} Can't understand your choise!${NORMAL}"
+			fi
+		else
+			count=1
+		fi
+	done
+}
+
+# Function to check or change your plugins folders
+function CHECK_PLUGINS_FOLDER {
+	echo " Please enter the path to your rutorrent plugins folder."
+	echo -n " Leave blank for default [/var/www/rutorrent/plugins]: "
+	read DIR
+
+	if [[ -z $DIR ]]; then
+		PLUGINS_DIR="/var/www/rutorrent/plugins"
+	else
+		count=0
+		while [ $count -eq 0 ]; do
+			if [[ ! -d $DIR ]]; then
+				echo
+				echo -e "${RED} Error! This folder not exits.${NORMAL}"
+				echo
+				echo " It's possible to create it."
+				read -p " Do you want to create $DIR folder ?" -n 1
+				if [[ $REPLY =~ [Yy]$ ]]; then
+					count=1
+					mkdir -vp $DIR
+					PLUGINS_DIR="$DIR"
+				elif [[ $REPLY =~ [Nn]$ ]]; then
+					count=1
+					CHECK_PLUGINS_FOLDER
+				else
+					count=0
+					error="${RED} Can't understand your choice !${NORMAL}"
+				fi
+			fi
+		done
+	fi
 }
 
 # Function to set the system user, rtorrent is going to run as
 function SET_RTORRENT_USER {
-	con=0
-	while [ $con -eq 0 ]; do
-		echo -n "Please type a valid system user: "
+	count=0
+
+	while [ $count -eq 0 ]; do
+		SUDO_CHECK="$(dpkg-query -W -f='${Status}' sudo 2>/dev/null | grep -c "ok installed")"
+
+		HEADER
+		echo -e $error
+		unset error
+		echo -n " Please type a valid system user: "
 		read RTORRENT_USER
 
-		if [ -z $(cat /etc/passwd | grep "^$RTORRENT_USER:") ]; then
+		if [[ -z $(cat /etc/passwd | grep "^$RTORRENT_USER:") ]]; then
+			HEADER
+			echo " ${BOLD}The user \"$RTORRENT_USER\" does not exist!${NORMAL}"
 			echo
-			echo "This user does not exist!"
-		elif [ $(cat /etc/passwd | grep "^$RTORRENT_USER:" | cut -d: -f3) -lt 999 ]; then
+			echo " [1] - Create the \"$RTORRENT_USER\" user"
+			echo " [2] - Create a new user"
 			echo
-			echo "That user's UID is too low!"
-		elif [ $RTORRENT_USER == nobody ]; then
+			echo " [0] - Back"
 			echo
-			echo "You cant use 'nobody' as user!"
+			echo -e $error
+			unset error
+			echo -n " What you want to do? "
+			read -e user
+
+			case $user in
+				1)
+					# This method is for create a new system user previously seletected
+					# add them to the default group or to sudo group and create a new home directory for it
+					USERNAME="$RTORRENT_USER"
+
+					HEADER
+					echo "${BOLD} A password is required and a blank password is not allowed.${NORMAL}"
+					echo
+					echo " Username chosen: ${BOLD}$USERNAME${NORMAL}"
+					read -s -p " Enter password: " PWD
+
+					egrep "^$USERNAME" /etc/passwd >/dev/null
+
+					if [[ ! -n $PWD ]]; then
+						echo && echo
+						echo "${BOLD} An empty password is not allowed!${NORMAL}"
+						echo
+						read -p " Press any key to continue..." -n 1
+					else
+						# This perl command is for create encrypted password, is a needed passage
+						# for create a new user. An empy password is not possibile
+						ENCRYPTED_PASSWORD=$(perl -e 'print crypt($ARGV[0], "password")' $PWD)
+
+						# Check for 'home' dir, this is for custom installation of the os
+						if [[ ! -d "/home/" ]]; then
+							mkdir -p /home/
+						fi
+
+						if [[ $SUDO_CHECK -ne 1 ]]; then
+							useradd -m -p $ENCRYPTED_PASSWORD $USERNAME
+						else
+							echo && echo
+							echo "The package \"sudo\" seem to be installed."
+							read -p " You want to add the new user to 'sudo' group? [Y/n] " -n 1
+							if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+								# Add a user to 'sudo' group, if the package is installed
+								useradd -m -G sudo -p $ENCRYPTED_PASSWORD $USERNAME
+							fi
+						fi
+
+						if [[ $? -eq 0 ]]; then
+							RTORRENT_USER="$USERNAME"
+							RTORRENT_HOME_DIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
+							count=1
+
+							echo && echo
+							echo " ${GREEN}User has been added to system!${NORMAL}"
+							echo
+							read -p " Press any key to continue..." -n 1
+						else
+							echo && echo
+							echo " ${RED}Failed to add a user!${NORMAL}"
+							echo
+							read -p " Press any key to continue..." -n 1
+						fi
+					fi
+					;;
+				2)
+					# This method is for create a new system user, add them to the default group
+					# or to sudo group and create a new home directory for it
+					HEADER
+					echo "${BOLD} A password is required and a blank password is not allowed.${NORMAL}"
+					echo
+					read -p " Enter username: " USERNAME
+					read -s -p " Enter password: " PWD
+
+					egrep "^$USERNAME" /etc/passwd >/dev/null
+
+					if [[ $? -eq 0 ]]; then
+						echo && echo
+						echo "${BOLD} The user \"$USERNAME\" exists!${NORMAL}"
+						echo
+						read -p " Press any key to continue..." -n 1
+					elif [[ ! -n $PWD ]]; then
+						echo && echo
+						echo "${BOLD} An empty password is not allowed!${NORMAL}"
+						echo
+						read -p " Press any key to continue..." -n 1
+					else
+						# This perl command is for create encrypted password, is a needed passage
+						# for create a new user. An empy password is not possibile
+						ENCRYPTED_PASSWORD=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
+
+						# Check for /home/ dir, this is for custom installation for the os
+						if [[ ! -d "/home/" ]]; then
+							mkdir -p /home/
+						fi
+
+						if [[ $SUDO_CHECK -ne 1 ]]; then
+							useradd -m -p $ENCRYPTED_PASSWORD $USERNAME
+						else
+							echo && echo
+							read -p " You want to add the new user to 'sudo' group? [Y/n] " -n 1
+							if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+								# Add a user to 'sudo' group, if the package is installed
+								useradd -m -G sudo -p $ENCRYPTED_PASSWORD $USERNAME
+							fi
+						fi
+
+						if [ $? -eq 0 ]; then
+							RTORRENT_USER="$USERNAME"
+							RTORRENT_HOME_DIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
+							count=1
+
+							echo && echo
+							echo " ${GREEN}User has been added to system!${NORMAL}"
+							echo
+							read -p " Press any key to continue..." -n 1
+						else
+							echo && echo
+							echo " ${RED}Failed to add a user!${NORMAL}"
+							echo
+							read -p " Press any key to continue..." -n 1
+						fi
+					fi
+					;;
+				0)
+					SET_RTORRENT_USER
+					;;
+				*)
+					echo
+					error="${RED} Not a usable number!${NORMAL}"
+					;;
+			esac
+		elif [[ $(cat /etc/passwd | grep "^$RTORRENT_USER:" | cut -d: -f3) -lt 999 ]]; then
+			echo
+			error="${BOLD} The UID for \"$RTORRENT_USER\" is too low!${NORMAL}"
+		elif [[ $RTORRENT_USER == nobody ]]; then
+			echo
+			error="${BOLD} You cant use \"$RTORRENT_USER\" as user!${NORMAL}"
 		else
 			RTORRENT_HOME_DIR=$(cat /etc/passwd | grep "$RTORRENT_USER": | cut -d: -f6)
-			con=1
+			count=1
 		fi
 	done
 }
@@ -211,18 +434,21 @@ function SET_RTORRENT_USER {
 # Function to create users for the webinterface
 function SET_WEB_USER {
 	while true; do
-		USER=$(htpasswd -n $WEB_USER 2>/dev/null)
-
-		echo -n "Please type the username for the web interface, a system user is not required: "
+		HEADER
+		echo "Please type the username for the web interface, a system user is not required."
+		echo "${BOLD}A blank password is possible, but not recommended.${NORMAL}"
+		echo -e $error
+		unset error
+		echo -n "Username for web interface: "
 		read WEB_USER
 
-		if [ $? = 0 ]; then
+		USER=$(htpasswd -n $WEB_USER 2>/dev/null)
+		if [[ $? = 0 ]]; then
 			WEB_USER_ARRAY+=($USER)
 			break
 		else
 			echo
-			echo "${RED}Something went wrong!"
-			echo "You have entered an unusable username and/or different passwords.${NORMAL}"
+			error="${RED}You have entered an unusable username and/or different password.${NORMAL}"
 		fi
 	done
 }
@@ -241,9 +467,102 @@ function LIST_PLUGINS {
 		echo "   No plugins downloaded!"
 	else
 		for i in "${PLUGIN_ARRAY[@]}"; do
-			echo "   - $i"
+			echo -e "   - $i"
 		done
 	fi
+}
+
+# Function to change temp installation directory
+function CHANGE_TEMP_INSTALL_DIR {
+	count=0
+
+	while [ $count -eq 0 ]; do
+		HEADER
+		echo " If the directory don't exist, a possibility to create it's given."
+		read -p "Do you want to change the temporany installation directory? [Y/n] " -n 1
+
+		if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+			echo -n "Please type a valid system user: "
+			read NEW_DIR
+
+			if [[ -d $NEW_DIR ]]; then
+				# Change the old dir with the new one
+				TEMP_INSTALL_DIR="$NEW_DIR"
+				count=1
+			else
+				echo "${RED}Something went wrong!"
+				echo " The directory chosen \"$NEW_DIR\" don't exist.${NORMAL}"
+				echo
+				read -p "Do you want to create \"$NEW_DIR\"? [Y/n] " -n 1
+				if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+					# Create the new directory
+					mkdir -vp $NEW_DIR
+
+					# Change the old dir with the new one
+					TEMP_INSTALL_DIR="$NEW_DIR"
+					count=1
+				else
+					count=0
+				fi
+				count=0
+			fi
+		elif [[ $REPLY =~ [Nn]$ ]]; then
+			count=1
+		else
+			echo "${RED}Something went wrong...Error!${NORMAL}"
+			read -p " Press any key to continue..." -n 1
+		fi
+	done
+}
+
+# Function to change temp plugins directory
+function CHANGE_TEMP_PLUGINS_DIR {
+	count=0
+
+	while [ $count -eq 0 ]; do
+		HEADER
+		echo " All the previous downloaded plugins, is moved into the new directory."
+		echo " If the directory don't exist, a possibility to create it's given."
+		read -p "Do you want to change the temporany plugins directory? [Y/n] " -n 1
+
+		if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+			echo -n "Please type a valid system user: "
+			read NEW_DIR
+
+			if [[ -d $NEW_DIR ]]; then
+				# Move all the directories/files into new temp dir
+				mv $TEMP_PLUGIN_DIR* $NEW_DIR
+
+				# Change the old dir with the new one
+				TEMP_PLUGIN_DIR="$NEW_DIR"
+				count=1
+			else
+				echo "${RED}Something went wrong!"
+				echo " The directory chosen \"$NEW_DIR\" don't exist.${NORMAL}"
+				echo
+				read -p "Do you want to create \"$NEW_DIR\"? [Y/n] " -n 1
+
+				if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+					# Create the new directory
+					mkdir -vp $NEW_DIR
+
+					# Move all the directories/files into new temp dir
+					mv $TEMP_PLUGIN_DIR* $NEW_DIR
+
+					# Change the old dir with the new one
+					TEMP_PLUGIN_DIR="$NEW_DIR"
+					count=1
+				else
+					count=0
+				fi
+			fi
+		elif [[ $REPLY =~ [Nn]$ ]]; then
+			count=1
+		else
+			echo "${RED}Something went wrong...Error!${NORMAL}"
+			read -p " Press any key to continue..." -n 1
+		fi
+	done
 }
 
 # RaspberryPi Ascii Art taken from piksel on github, https://gist.github.com/piksel/3023588
@@ -251,106 +570,116 @@ function LIST_PLUGINS {
 function HEADER {
 	clear
 	echo "${GREEN}
-       .~~.   .~~.
-      '. \ ' ' / .'${RED}                       _                          _
-       .~ .~~~..~.        ___ ___ ___ ___| |_ ___ ___ ___ _ _    ___|_|
-      : .~.'~'.~. :      |  _| .'|_ -| . | . | -_|  _|  _| | |  | . | |
-     ~ (   ) (   ) ~     |_| |__,|___|  _|___|___|_| |_| |_  |  |  _|_|
-    ( : '~'.~.'~' : )                |_|                 |___|  |_|
-     ~ .~ (   ) ~. ~
-      (  : '~' :  )       ${NORMAL}${BOLD}Apache2 + rTorrent + ruTorrent Auto Install${NORMAL}${RED}
-       '~ .~~~. ~'            ${NORMAL}${LBLUE} Patrick Kerwood @ LinuxBloggen.dk${NORMAL}${RED}
-           '~'${NORMAL}"
+      .~~.   .~~.
+     '. \ ' ' / .'${RED}                       _                          _
+      .~ .~~~..~.        ___ ___ ___ ___| |_ ___ ___ ___ _ _    ___|_|
+     : .~.'~'.~. :      |  _| .'|_ -| . | . | -_|  _|  _| | |  | . | |
+    ~ (   ) (   ) ~     |_| |__,|___|  _|___|___|_| |_| |_  |  |  _|_|
+   ( : '~'.~.'~' : )                |_|                 |___|  |_|
+    ~ .~ (   ) ~. ~
+     (  : '~' :  )      ${NORMAL}${BOLD}Web Server + rTorrent + ruTorrent Auto Install${NORMAL}${RED}
+      '~ .~~~. ~'            ${NORMAL}${LBLUE} Patrick Kerwood @ LinuxBloggen.dk${NORMAL}${RED}
+          '~'${NORMAL}"
 	echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
-	echo
 }
 
 # Function for the plugins download part
 function DOWNLOAD_PLUGIN {
+	clear
+	echo "${GREEN}-------------------------------------| Info |-----------------------------------${NORMAL}"
 	echo
-	echo -e "$desc"
+	echo " Plugin: ${LBLUE}$name${NORMAL}"
 	echo
-	read -p "Download ${LBLUE}$name${NORMAL} [y/n]: " -n 1
+	echo -e " $desc"
+	echo
+	echo " Info at $homepage"
+	echo
+	read -p " You want to download it [Y/n]: " -n 1
 
-	if [[ $REPLY =~ [Yy]$ ]]; then
+	if [[ $REPLY =~ [Yy]$ || -z $REPLY ]]; then
+		if [[ $PLUGIN_NEEDS -eq "geoip" ]]; then
+			curl -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+			mkdir -v /usr/share/GeoIP
+			gunzip GeoLiteCity.dat.gz
+			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+			rm GeoLiteCity.dat.gz
+			apt-get -y install php5-geoip
+		elif [[ $PLUGIN_NEEDS -eq "unrar" ]]; then
+			apt-get -y install unrar-free
+		elif [[ $PLUGIN_NEEDS -eq "mediainfo" ]]; then
+			curl -O http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
+			rm _task-3.6.tar.gz
+			apt-get -y install libzen0 libmediainfo0 mediainfo
+		elif [[ $PLUGIN_NEEDS -eq "ffmpeg" ]]; then
+			curl -O http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
+			tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
+			rm _task-3.6.tar.gz
+			apt-get -y install ffmpeg
+		elif [[ $PLUGIN_NEEDS -eq "all" ]]; then
+			curl -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+			mkdir -v /usr/share/GeoIP
+			gunzip GeoLiteCity.dat.gz
+			mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+			rm GeoLiteCity.dat.gz
+			mv /tmp/plugins/* $TEMP_PLUGIN_DIR
+			apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo unrar-free
+		else
+		 if [[ ! -z $PLUGIN_NEEDS ]]; then
+		 	PLUGIN_NEEDS=""
+		 fi
+		fi
+
 		echo
-		wget "$url"
+		curl -O "$url"
 		$unpack
-		if [ $? -eq "0" ]; then
+
+		if [[ $? -eq "0" ]]; then
 			rm "$file"
 			echo
 			PLUGIN_ARRAY+=("${name}")
-			error="${GREEN}${BOLD}$name${NORMAL}${GREEN} downloaded, unpacked and moved to temporary plugins folder${NORMAL}"
+			error=" Plugin downloaded, unpacked and moved to temp folder${NORMAL}"
+			count=0
 			return 0
 		else
 			echo
-			error="${RED}Something went wrong...Error!${NORMAL}"
+			error="${RED} Something went wrong...Error!${NORMAL}"
 			return 1
 		fi
 	else
-		return 1
+		count=0
 	fi
 	echo
 }
 
 function SELECT_PLUGINS {
-	if [ ! -d $TEMP_PLUGIN_DIR ]; then mkdir $TEMP_PLUGIN_DIR; fi
-	clear
+	if [[ ! -d $TEMP_PLUGIN_DIR ]]; then mkdir $TEMP_PLUGIN_DIR; fi
+	count=0
 
 	while true;	do
+		while [ $count -eq 0 ]; do
+			clear
+			count=1
+			echo "${GREEN}-----------------------------------| ${BOLD}Page 1${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+			echo " [1] - Erase Data ${GREEN}[recommended]${NORMAL}"
+			echo " [2] - Create v3.6"
+			echo " [3] - Traffic v3.6"
+			echo " [4] - RSS v3.6"
+			echo " [5] - Edit v3.6"
+			echo " [6] - Retrackers v3.6"
+			echo " [7] - Throttle v3.6"
+			echo " [8] - Cookies v3.6"
+			echo " [9] - Scheduler v3.6"
+			echo " [10] - Auto Tools v3.6"
+			echo " [11] - Data Dir v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [12] - Track Lables v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [13] - Geo IP v3.6"
+			echo " [14] - Ratio v3.6 ${GREEN}[recommended]${NORMAL}"
+			echo " [15] - Show Peers like wTorrent v3.6"
+		done
 		echo
-		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
-		echo
-		echo "1 - Erase Data ${GREEN}[recommended]${NORMAL}"
-		echo "2 - Create v3.6"
-		echo "3 - Traffic v3.6"
-		echo "4 - RSS v3.6"
-		echo "5 - Edit v3.6"
-		echo "6 - Retrackers v3.6"
-		echo "7 - Throttle v3.6"
-		echo "8 - Cookies v3.6"
-		echo "9 - Scheduler v3.6"
-		echo "10 - Auto Tools v3.6"
-		echo "11 - Data Dir v3.6 ${GREEN}[recommended]${NORMAL}"
-		echo "12 - Track Lables v3.6 ${GREEN}[recommended]${NORMAL}"
-		echo "13 - Geo IP v3.6"
-		echo "14 - Ratio v3.6 ${GREEN}[recommended]${NORMAL}"
-		echo "15 - Show Peers like wTorrent v3.6"
-		echo "16 - Seeding Time v3.6 ${GREEN}[recommended]${NORMAL}"
-		echo "17 - HTTPRPC v3.6"
-		echo "18 - Diskspace v3.6"
-		echo "19 - Unpack v3.6"
-		echo "20 - Get Dir v3.6"
-		echo "21 - Source v3.6"
-		echo "22 - Chunks v3.6"
-		echo "23 - Data v3.6"
-		echo "24 - CPU Load v3.6"
-		echo "25 - Extsearch v3.6"
-		echo "26 - Theme v3.6"
-		echo "27 - Login Mgr v3.6"
-		echo "28 - ruTorrent Label Management Suite v1.1 ${GREEN}[recommended]${NORMAL}"
-		echo "29 - NFO ${GREEN}[recommended]${NORMAL}"
-		echo "30 - Chat v2.0"
-		echo "31 - Logoff v1.3"
-		echo "32 - Pause v1.2"
-		echo "33 - Instant Search v1.0"
-		echo "34 - File Drop v3.6 (FF > 3.6 & Chrome only)"
-		echo "35 - Check Port v3.6"
-		echo "36 - History v3.6"
-		echo "37 - iPad v3.6"
-		echo "38 - Extended Ratio v3.6"
-		echo "39 - Feeds v3.6"
-		echo "40 - Media Information v3.6"
-		echo "41 - RSS URL Rewrite v3.6"
-		echo "42 - Screenshot v3.6"
-		echo "43 - RPC v3.6"
-		echo "44 - Rutracker Check v3.6"
-		echo "45 - Noty v3.6"
-		echo "46 - Task v3.6"
-		echo "47 - All Plugins v3.6. More at https://github.com/Novik/ruTorrent/wiki/Plugins"
-		echo
-		echo "0 - Exit plugin installation"
-		echo
+		echo " [p1-3] - Change plugin page"
+		echo " [q] - Exit plugin installation"
 		echo "${GREEN}--------------------------------------------------------------------------------${NORMAL}"
 		echo -e $error
 		unset error
@@ -360,11 +689,57 @@ function SELECT_PLUGINS {
 		read -e plugin
 
 		case $plugin in
+			p1)
+				count=0
+				;;
+			p2)
+				clear
+				count=1
+				echo "${GREEN}-----------------------------------| ${BOLD}Page 2${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+				echo " [16] - Seeding Time v3.6 ${GREEN}[recommended]${NORMAL}"
+				echo " [17] - HTTPRPC v3.6"
+				echo " [18] - Diskspace v3.6"
+				echo " [19] - Unpack v3.6"
+				echo " [20] - Get Dir v3.6"
+				echo " [21] - Source v3.6"
+				echo " [22] - Chunks v3.6"
+				echo " [23] - Data v3.6"
+				echo " [24] - CPU Load v3.6"
+				echo " [25] - Extsearch v3.6"
+				echo " [26] - Theme v3.6"
+				echo " [27] - Login Mgr v3.6"
+				echo " [28] - ruTorrent Label Management Suite v1.1 ${GREEN}[recommended]${NORMAL}"
+				echo " [29] - NFO ${GREEN}[recommended]${NORMAL}"
+				echo " [30] - Chat v2.0"
+				echo " [31] - Logoff v1.3"
+				;;
+			p3)
+				clear
+				count=1
+				echo "${GREEN}-----------------------------------| ${BOLD}Page 3${NORMAL}${GREEN} |-----------------------------------${NORMAL}"
+				echo " [32] - Pause v1.2"
+				echo " [33] - Instant Search v1.0"
+				echo " [34] - File Drop v3.6 (FF > 3.6 & Chrome only)"
+				echo " [35] - Check Port v3.6"
+				echo " [36] - History v3.6"
+				echo " [37] - iPad v3.6"
+				echo " [38] - Extended Ratio v3.6"
+				echo " [39] - Feeds v3.6"
+				echo " [40] - Media Information v3.6"
+				echo " [41] - RSS URL Rewrite v3.6"
+				echo " [42] - Screenshot v3.6"
+				echo " [43] - RPC v3.6"
+				echo " [44] - Rutracker Check v3.6"
+				echo " [45] - Noty v3.6"
+				echo " [46] - Task v3.6"
+				echo " [47] - All Plugins v3.6. More info at http://git.io/vtDfb"
+				;;
 			1)
 				name="Erase Data Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/erasedata-3.6.tar.gz"
 				file="erasedata-3.6.tar.gz"
-				desc=" This plugin adds a context menu item to the right click menu which allows you to delete data. \n http://code.google.com/p/rutorrent/wiki/PluginErasedata"
+				desc="This plugin adds a context menu item to the right click menu which allows you\n to delete data."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginErasedata"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -372,7 +747,8 @@ function SELECT_PLUGINS {
 				name="Create Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/create-3.6.tar.gz"
 				file="create-3.6.tar.gz"
-				desc="This plugin allows for the creation of new .torrent files from a file or directory full of files.\nhttp://code.google.com/p/rutorrent/wiki/PluginCreate"
+				desc="This plugin allows for the creation of new .torrent files from a file or\n directory of files."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginCreate"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -380,7 +756,8 @@ function SELECT_PLUGINS {
 				name="Trafic Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/trafic-3.6.tar.gz"
 				file="trafic-3.6.tar.gz"
-				desc="The Trafic plugin is a subsystem for monitoring rtorrent traffic totals.\nIt tracks both system wide and per-tracker totals.\nThe plugin can display totals in three formats, hourly, daily, and mouthly.\nStatistics can be cleaned out at any time by clicking the 'Clear' button on the interface (see screenshot).\nhttp://code.google.com/p/rutorrent/wiki/PluginTrafic"
+				desc="The Trafic plugin is a subsystem for monitoring rtorrent traffic totals.\n It tracks both system wide and per-tracker totals.\n The plugin can display totals in three formats: hourly, daily, and mouthly.\n Statistics can be cleaned out at any time by clicking the 'Clear' button."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginTrafic"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -388,15 +765,17 @@ function SELECT_PLUGINS {
 				name="RSS Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/rss-3.6.tar.gz"
 				file="rss-3.6.tar.gz"
-				desc="This plugin is designed to fetch torrents via rss download links.\nIt has 2 main parts, one for entering feeds, the other for setting up filters.\nFor more information about rss, see http://en.wikipedia.org/wiki/RSS.\nhttp://code.google.com/p/rutorrent/wiki/PluginRSS"
+				desc="This plugin is designed to fetch torrents via RSS download links.\n It has 2 main parts, one for entering feeds and one for setting up filters.\n For more information about rss, see http://en.wikipedia.org/wiki/RSS."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginRSS"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then apt-get -y install curl; fi
+				DOWNLOAD_PLUGIN
 				;;
 			5)
 				name="Edit Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/edit-3.6.tar.gz"
 				file="edit-3.6.tar.gz"
-				desc="This plugin allows you to edit the list of trackers, and change the comment of the current torrent.\nAfter installation, a new context menu item will become available when you right click a torrent from the list, 'Edit Torrent...'\nSelecting this will open the 'Torrent Properties' menu.\nhttp://code.google.com/p/rutorrent/wiki/PluginEdit"
+				desc="This plugin allows you to edit the list of trackers, and change the comment\n of the current torrent.\n After installation, a new context menu item will become available when you\n right click a torrent from the list: 'Edit Torrent...'"
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginEdit"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -404,7 +783,8 @@ function SELECT_PLUGINS {
 				name="Retrackers Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/retrackers-3.6.tar.gz"
 				file="retrackers-3.6.tar.gz"
-				desc="This plug-in appends specified trackers to the trackers list of all newly added torrents.\nBy the way, torrents may be added by any way - not just via ruTorrent.\nhttp://code.google.com/p/rutorrent/wiki/PluginRetrackers"
+				desc="This plugin appends specified trackers to the trackers list of all newly\n added torrents.\n By the way, torrents may be added by any way - not just via ruTorrent."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginRetrackers"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -412,7 +792,8 @@ function SELECT_PLUGINS {
 				name="Throttle Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/throttle-3.6.tar.gz"
 				file="throttle-3.6.tar.gz"
-				desc="In rTorrent version 0.8.5 and later it is possible to set limits of speed for groups of torrents.\nThrottle plug-in gives a convenient control over this possibility.\nAfter this plug-in is installed a new option "Channels" will appear in the Settings dialog.\nSpeed limits for some (by default - 10) channels can be set here.\nAssignment of channel number for a particular torrent or for a group of torrents can be made in it's contextual menu.\nNote - '0'-value, conventionally for rTorrent, means 'no limits', but not 'stop torrent'.\nSo the lowest possible limit is 1 Kbps.\nhttp://code.google.com/p/rutorrent/wiki/PluginThrottle"
+				desc="Throttle plugin gives a convenient control over the possibility to set limits\n of speed for groups of torrents.\n After this plugin is installed a new option 'Channels' will appear in\n the Settings dialog.\n Speed limits for some channels can be set here. (by default - 10)\n Assignment of channel number for a particular torrent or for a group of\n torrents can be made in it's contextual menu.\n Note - The '0' value conventionally for rTorrent, means 'no limits'.\n So the lowest possible limit is 1 Kbps."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginThrottle"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -420,7 +801,8 @@ function SELECT_PLUGINS {
 				name="Cookies Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/cookies-3.6.tar.gz"
 				file="cookies-3.6.tar.gz"
-				desc="Some trackers use cookies for the client authentication.\nIt is transparent to user who uses a browser to work with such servers - browser store these cookies and returns them to the server automatically.\nThe user just needs to enter login/password from time to time.\nBut when rTorrent is used to work with such trackers (e.g. adding a torrent via URL) it might be a problem because rTorrent does not understand cookies.\nSo the the information from cookies should be provided for rTorrent separately.\nhttp://code.google.com/p/rutorrent/wiki/PluginCookies"
+				desc="Some trackers use cookies for the client authentication.\n It is transparent to user who uses a browser to work with such servers,\n cause browser store these cookies and returns them to the server automatically.\n The user just needs to enter login/password from time to time."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginCookies"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -428,7 +810,8 @@ function SELECT_PLUGINS {
 				name="Scheduler v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/scheduler-3.6.tar.gz"
 				file="scheduler-3.6.tar.gz"
-				desc="http://code.google.com/p/rutorrent/wiki/PluginScheduler"
+				desc="You can enable a scheduler to define a max of six rTorrent behavior types\n at each particular hour of 168 week hours."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginScheduler"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -436,7 +819,8 @@ function SELECT_PLUGINS {
 				name="Auto Tools Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/autotools-3.6.tar.gz"
 				file="autotools-3.6.tar.gz"
-				desc="The plug-in provides some possibilities on automation. Following functions are realized for now:\nAuto Label automatic creation of labels at addition of new torrent through the web interface.\nAuto Move automatic transferring of torrent data files to other directory on downloading completion.\nAuto Watch automatic adding torrents to rtorrent via nested set of watch directories.\nhttp://code.google.com/p/rutorrent/wiki/PluginAutotools"
+				desc="The plugin provides some possibilities on automation.\n Following functions are realized for now:\n Auto Label, automatic creation of labels at addition of new torrent through\n the web interface.\n Auto Move: automatic transferring of torrent data files to other directory\n on downloading completion.\n Auto Watch: automatic adding torrents via nested set of\n watch directories."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginAutotools"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -444,7 +828,8 @@ function SELECT_PLUGINS {
 				name="Data Dir Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/datadir-3.6.tar.gz"
 				file="datadir-3.6.tar.gz"
-				desc="The plug-in is intended for replacement of the current torrent data directory on another.\nSuch operation is required, for example, if the torrent data directory has been moved manually.\nIt is also possible to move downloaded torrent's data.\nAfter plug-in installation there will be a new item 'Save to...' in the context menu of the downloading area which shows a dialogue 'Torrent data directory'.\nIn this dialogue you can specify a new path to the torrent data.\nhttp://code.google.com/p/rutorrent/wiki/PluginDataDir"
+				desc="The plugin is intended for replacement of the current torrent data directory\n on another.\n Such operation is required, for example if the torrent data directory\n has been moved manually.\n It is also possible to move downloaded torrent's data.\n After plugin installation there will be a new item 'Save to...' in the context\n menu of the downloading area which shows a dialogue 'Torrent data directory'.\n In this dialogue you can specify a new path to the torrent data."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginDataDir"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -452,7 +837,8 @@ function SELECT_PLUGINS {
 				name="Track Lables Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/tracklabels-3.6.tar.gz"
 				file="tracklabels-3.6.tar.gz"
-				desc="The plug-in adds a set of labels on the category panel.\nThese labels are created automatically on the basis of torrents' trackers.\nhttp://code.google.com/p/rutorrent/wiki/PluginTracklabels"
+				desc="The plug-in adds a set of labels on the category panel.\n These labels are created automatically on the basis of torrent's trackers."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginTracklabels"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -460,22 +846,18 @@ function SELECT_PLUGINS {
 				name="Geo IP Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/geoip-3.6.tar.gz"
 				file="geoip-3.6.tar.gz"
-				desc="Packages 'GeoLiteCity' and 'php5-geoip' is needed. http://code.google.com/p/rutorrent/wiki/PluginGeoIP"
+				desc="Packages 'GeoLiteCity' and 'php5-geoip' is needed. \n For details about installation and configuration of GeoIP PHP extension,\n please visit: http://us3.php.net/manual/en/book.geoip.php"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginGeoIP"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then
-					wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
-					mkdir -v /usr/share/GeoIP
-					gunzip GeoLiteCity.dat.gz
-					mv -v GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
-					rm GeoLiteCity.dat.gz
-					apt-get -y install php5-geoip
-				fi
+				PLUGIN_NEEDS="geoip"
+				DOWNLOAD_PLUGIN
 				;;
 			14)
 				name="Ratio Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/ratio-3.6.tar.gz"
 				file="ratio-3.6.tar.gz"
-				desc="Since version 0.8.5 rTorrent has a capability to set ratio limits for groups of torrents.\nThe plug-in allows to manage it conveniently.\nWhen the plug-in is installed a new section 'Ratio groups' appears in the Settings dialog.\nHere user can define limits of ratio for some (by default - 8) groups.\nAssignation of group to one or several torrents is performed by selecting an appropriate option in the context menu of torrents.\nhttp://code.google.com/p/rutorrent/wiki/PluginRatio"
+				desc="This plugin allows to manage ratio limits for groups of torrents, conveniently.\n When the plugin is installed a new section 'Ratio groups' appears\n in the Settings dialog.\n Here user can define limits of ratio for some groups. (by default - 8)\n Assignation of group to one or several torrents is performed by selecting\n an appropriate option in the context menu of torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRatio"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -483,7 +865,8 @@ function SELECT_PLUGINS {
 				name="Show Peers like wTorrent Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/show_peers_like_wtorrent-3.6.tar.gz"
 				file="show_peers_like_wtorrent-3.6.tar.gz"
-				desc="The plug-in changes the format of values in columns 'Seeds' and 'Peers' in the torrents list.\nhttp://code.google.com/p/rutorrent/wiki/PluginShow_peers_like_wtorrent"
+				desc="The plugin changes the format of values in columns 'Seeds' and 'Peers'\n in the torrents list."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginShow_peers_like_wtorrent"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -491,7 +874,8 @@ function SELECT_PLUGINS {
 				name="Seeding Time Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/seedingtime-3.6.tar.gz"
 				file="seedingtime-3.6.tar.gz"
-				desc="The plug-in adds the columns 'Finished' and 'Added' to the torrents list.\nThis columns contains the time when download of the torrent was completed and, accordingly, the time when torrent was added.\nhttp://code.google.com/p/rutorrent/wiki/PluginSeedingtime"
+				desc="The plugin adds the columns 'Finished' and 'Added' to the torrents list.\n This columns contains the time when download of the torrent was completed and\n accordingly, the time when torrent was added."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginSeedingtime"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -499,7 +883,8 @@ function SELECT_PLUGINS {
 				name="HTTPRPC Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/httprpc-3.6.tar.gz"
 				file="httprpc-3.6.tar.gz"
-				desc="This plugin is designed as a easy to use replacement for the mod_scgi (or similar) webserver module, with emphasis on extremely low bandwidth use.\nIf you install this plugin, you do not need to use mod_scgi or the RPC Plugin.\nNote: This plugin requires a faster server, and is not recommended for embedded systems, like a router or slow computer.\nhttp://code.google.com/p/rutorrent/wiki/PluginHTTPRPC"
+				desc="This plugin is designed as a easy to use replacement for the mod_scgi\n (or similar) webserver module, with emphasis on extremely low bandwidth use.\n If you install this plugin, you do not need to use mod_scgi or the RPC Plugin.\n Note: This plugin requires a faster server, and is not recommended for embedded\n systems, like a router or slow computer."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginHTTPRPC"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -507,7 +892,8 @@ function SELECT_PLUGINS {
 				name="Diskspace Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/diskspace-3.6.tar.gz"
 				file="diskspace-3.6.tar.gz"
-				desc="This plugin adds an easy to read disk meter to the bottom menu bar.\nhttp://code.google.com/p/rutorrent/wiki/PluginDiskspace"
+				desc="This plugin adds an easy to read disk meter to the bottom menu bar."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginDiskspace"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -515,15 +901,18 @@ function SELECT_PLUGINS {
 				name="Unpack Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/unpack-3.6.tar.gz"
 				file="unpack-3.6.tar.gz"
-				desc="Packages 'unrar-free' is needed.\nThis plugin is designed to manually or automatically unrar/unzip torrent data.\nhttp://code.google.com/p/rutorrent/wiki/PluginUnpack"
+				desc="Packages 'unrar-free' is needed.\n This plugin is designed to manually or automatically unrar/unzip torrent data."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginUnpack"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then apt-get -y install unrar-free; fi
+				PLUGIN_NEEDS="unrar"
+				DOWNLOAD_PLUGIN
 			;;
 			20)
 				name="Get Dir Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/_getdir-3.6.tar.gz"
 				file="_getdir-3.6.tar.gz"
-				desc="The service plug-in _getdir gives to other plug-ins the possibility of comfortable navigation on a host file system.\nShows only directories to which rtorrent can write and which php can show.\nhttp://code.google.com/p/rutorrent/wiki/Plugin_getdir"
+				desc="The service plugin _getdir gives to other plugins the possibility of\n comfortable navigation on a host file system.\n Shows only directories to which rtorrent can write and which php can show."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_getdir"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -531,7 +920,8 @@ function SELECT_PLUGINS {
 				name="Source Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/source-3.6.tar.gz"
 				file="source-3.6.tar.gz"
-				desc="This plugin adds a 'Get .torrent' item to the right click context menu.\nAllowing you to download the original .torrent file from the server, to your local machine.\nhttp://code.google.com/p/rutorrent/wiki/PluginSource"
+				desc="This plugin adds a 'Get .torrent' item to the right click context menu.\n Allowing you to download the original .torrent file from the server,\n to your local machine."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginSource"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -539,7 +929,8 @@ function SELECT_PLUGINS {
 				name="Chunks Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/chunks-3.6.tar.gz"
 				file="chunks-3.6.tar.gz"
-				desc="This plugin adds a new tab to the tab bar called 'chunks'.\nThe added tab allows you to monitor the download status of each individual torrent 'piece'\nhttp://code.google.com/p/rutorrent/wiki/PluginChunks"
+				desc="This plugin adds a new tab to the tab bar called 'chunks'.\n The added tab allows you to monitor the download status of each individual\n torrent 'piece'"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginChunks"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -547,7 +938,8 @@ function SELECT_PLUGINS {
 				name="Data Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/data-3.6.tar.gz"
 				file="data-3.6.tar.gz"
-				desc="This plugin adds the 'Get Data' item to the right click menu.\nThis allows you to download the file in question via http to your local machine.\nOn 32 bit systems, you can not download files larger than 2 GB, this is due to a php limitation\nhttp://code.google.com/p/rutorrent/wiki/PluginData"
+				desc="This plugin adds the 'Get Data' item to the right click menu.\n This allows you to download the file in question via http to your\n local machine.\n On 32 bit systems, you can not download files larger than 2 GB, this is due\n to a php limitation"
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginData"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -555,7 +947,8 @@ function SELECT_PLUGINS {
 				name="CPU Load Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/cpuload-3.6.tar.gz"
 				file="cpuload-3.6.tar.gz"
-				desc="This plugin adds a CPU Load usage bar to the bottom toolbar.\nhttp://code.google.com/p/rutorrent/wiki/PluginCpuload"
+				desc="This plugin adds a CPU Load usage bar to the bottom toolbar."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginCpuload"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -563,7 +956,8 @@ function SELECT_PLUGINS {
 				name="Extsearch Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/extsearch-3.6.tar.gz"
 				file="extsearch-3.6.tar.gz"
-				desc="This plugin adds the ability to search many popular torrent sites for content without leaving the rutorrent url.\nhttp://code.google.com/p/rutorrent/wiki/PluginExtsearch"
+				desc="This plugin adds the ability to search many popular torrent sites for content\n without leaving the rutorrent url."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginExtsearch"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -571,7 +965,8 @@ function SELECT_PLUGINS {
 				name="Theme Plugin v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/theme-3.6.tar.gz"
 				file="theme-3.6.tar.gz"
-				desc="This plugin allows you to change the gui theme to one of several provided themes, or any your create,\nprovided they are placed in the proper directory within the plugin.\nhttp://code.google.com/p/rutorrent/wiki/PluginTheme"
+				desc="This plugin allows you to change the gui theme to one of several provided\n themes, or any your create, provided they are placed in the proper\n directory within the plugin."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginTheme"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -579,7 +974,8 @@ function SELECT_PLUGINS {
 				name="Login Mgr v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/loginmgr-3.6.tar.gz"
 				file="loginmgr-3.6.tar.gz"
-				desc="This plugin is used to login to 3rd party torrent sites.\nIt's designed to be used in cased where cookies fail.\nIt is a support plugin used for RSS and ExtSearch.\nNOTE: This plugin saves passwords in plain text.\nhttp://code.google.com/p/rutorrent/wiki/PluginLoginMgr"
+				desc="This plugin is used to login to 3rd party torrent sites.\n It's designed to be used in cased where cookies fail.\n It is a support plugin used for RSS and ExtSearch.\n Note: This plugin saves passwords in plain text."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginLoginMgr"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -588,6 +984,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/lookat-3.6.tar.gz"
 				file="lookat-3.6.tar.gz"
 				desc="This plugin is intended for looking torrent's name in the external sources."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginLookAt"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -595,7 +992,8 @@ function SELECT_PLUGINS {
 				name="NFO Plugin"
 				url="http://srious.biz/nfo.tar.gz"
 				file="nfo.tar.gz"
-				desc="This plugin shows the contents of the .nfo file for a given torrent.\nhttp://code.google.com/p/rutorrent/wiki/PluginNFO"
+				desc="This plugin shows the contents of the .nfo file for a given torrent."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginNFO"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -603,7 +1001,8 @@ function SELECT_PLUGINS {
 				name="Chat Plugin v2.0"
 				url="http://rutorrent-chat.googlecode.com/files/chat-2.0.tar.gz"
 				file="chat-2.0.tar.gz"
-				desc="This plugin adds a chatbox to multi-user rutorrent installs.\nNOTE: Currently this is a single server chat program only (if you have multiple servers, this will NOT allow your users to chat across them).\nhttp://code.google.com/p/rutorrent/wiki/PluginChat"
+				desc="This plugin adds a chatbox to multi-user rutorrent installs.\n Note: Currently this is a single server chat program only\n (if you have multiple servers, this will NOT allow\n your users to chat across them)."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginChat"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -611,7 +1010,8 @@ function SELECT_PLUGINS {
 				name="Logoff Plugin v1.3"
 				url="http://rutorrent-logoff.googlecode.com/files/logoff-1.3.tar.gz"
 				file="logoff-1.3.tar.gz"
-				desc="This plugin allows you to switch users or logoff on systems which use authentication.\nhttp://code.google.com/p/rutorrent-logoff/"
+				desc="This plugin allows you to switch users or logoff on systems which\n use authentication."
+				homepage="https://github.com/Novik/rutorrent-logoff/"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -619,7 +1019,8 @@ function SELECT_PLUGINS {
 				name="Pause Plugin v1.2"
 				url="http://rutorrent-pausewebui.googlecode.com/files/pausewebui.1.2.zip"
 				file="pausewebui.1.2.zip"
-				desc="Plugin to pause the refresh timer, and add a button to manually refresh the page.\nhttp://code.google.com/p/rutorrent/wiki/PluginPause"
+				desc="Plugin to pause the refresh timer, and add a button to manually refresh\n the page."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginPause"
 				unpack="unzip $file -d $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -627,7 +1028,8 @@ function SELECT_PLUGINS {
 				name="Instant Search Plugin v1.0"
 				url="http://rutorrent-instantsearch.googlecode.com/files/instantsearch.1.0.zip"
 				file="instantsearch.1.0.zip"
-				desc="This plugin lets you search for local torrents running in rutorrent, updating results as you type them.\nhttp://code.google.com/p/rutorrent/wiki/PluginInstantSearch"
+				desc="This plugin lets you search for local torrents running in rutorrent,\n updating results as you type them."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginInstantSearch"
 				unpack="unzip $file -d $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -635,7 +1037,8 @@ function SELECT_PLUGINS {
 				name="File Drop v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/filedrop-3.6.tar.gz"
 				file="filedrop-3.6.tar.gz"
-				desc="This plugin allows users to drag multiple torrents from desktop to the browser (FF > 3.6 & Chrome only)."
+				desc="This plugin allows users to drag multiple torrents from desktop to the\n browser (FF > 3.6 & Chrome only)."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginFileDrop"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -644,6 +1047,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/check_port-3.6.tar.gz"
 				file="check_port-3.6.tar.gz"
 				desc="This plugin adds an incoming port status indicator to the bottom bar."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginCheckPort"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -652,6 +1056,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/history-3.6.tar.gz"
 				file="history-3.6.tar.gz"
 				desc="This plugin is designed to log a history of torrents."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginHistory"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -660,6 +1065,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/ipad-3.6.tar.gz"
 				file="ipad-3.6.tar.gz"
 				desc="This plugin allows ruTorrent to work properly on iPad-like devices."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginIPad"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -668,6 +1074,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/extratio-3.6.tar.gz"
 				file="extratio-3.6.tar.gz"
 				desc="This plugin extends the functionality of the ratio plugin."
+				homepage="https://github.com/Novik/ruTorrent/wiki/PluginExtRatio"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -675,7 +1082,8 @@ function SELECT_PLUGINS {
 				name="Feeds v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/feeds-3.6.tar.gz"
 				file="feeds-3.6.tar.gz"
-				desc="This plugin is intended for making RSS feeds with information of torrents. \nhttp://code.google.com/p/rutorrent/wiki/PluginFeeds"
+				desc="This plugin is intended for making RSS feeds with information of torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginFeeds"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -684,19 +1092,17 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/mediainfo-3.6.tar.gz"
 				file="mediainfo-3.6.tar.gz"
 				desc="This plugin is intended to display media file information."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginMediainfo"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then
-					apt-get -y install libzen0 libmediainfo0 mediainfo
-					wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
-					tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
-					rm _task-3.6.tar.gz
-				fi
+				PLUGIN_NEEDS="mediainfo"
+				DOWNLOAD_PLUGIN
 				;;
 			41)
 				name="RSS URL Rewrite v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/rssurlrewrite-3.6.tar.gz"
 				file="rssurlrewrite-3.6.tar.gz"
-				desc="This plugin extends the functionality of the RSS plugin. \nhttp://code.google.com/p/rutorrent/wiki/PluginRSSURLRewrite"
+				desc="This plugin extends the functionality of the RSS plugin."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRSSURLRewrite"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -704,20 +1110,18 @@ function SELECT_PLUGINS {
 				name="Screenshot v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/screenshots-3.6.tar.gz"
 				file="screenshots-3.6.tar.gz"
-				desc="Packages 'ffmpeg' is needed.\nThis plugin is intended to show screenshots from video files."
+				desc="Packages 'ffmpeg' is needed.\n This plugin is intended to show screenshots from video files."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginScreenshots"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
-				if DOWNLOAD_PLUGIN; then
-					apt-get -y install ffmpeg
-					wget http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz
-					tar -zxvf _task-3.6.tar.gz -C $TEMP_PLUGIN_DIR
-					rm _task-3.6.tar.gz
-				fi
+				PLUGIN_NEEDS="ffmpeg"
+				DOWNLOAD_PLUGIN
 				;;
 			43)
 				name="RPC v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/rpc-3.6.tar.gz"
 				file="rpc-3.6.tar.gz"
 				desc="This plugin is a replacement for the mod_scgi webserver module."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRPC"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -726,6 +1130,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/rutracker_check-3.6.tar.gz"
 				file="rutracker_check-3.6.tar.gz"
 				desc="This plugin checks the rutracker.org tracker for updated/deleted torrents."
+				homepage="https://github.com/Novik/rutorrent/wiki/PluginRutracker_check"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -734,6 +1139,7 @@ function SELECT_PLUGINS {
 				url="http://dl.bintray.com/novik65/generic/plugins/_noty-3.6.tar.gz"
 				file="_noty-3.6.tar.gz"
 				desc="This plugin provides the notification functionality for other plugins."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_noty"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
@@ -741,25 +1147,26 @@ function SELECT_PLUGINS {
 				name="Task v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins/_task-3.6.tar.gz"
 				file="_task-3.6.tar.gz"
-				desc="This plugin provides the possibility of running various scripts on the host system."
+				desc="This plugin provides the possibility of running various scripts\n on the host system."
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugin_task"
 				unpack="tar -zxvf $file -C $TEMP_PLUGIN_DIR"
 				DOWNLOAD_PLUGIN
 				;;
 			47)
-				name="Plugins v3.6"
+				name="All Plugins v3.6"
 				url="http://dl.bintray.com/novik65/generic/plugins-3.6.tar.gz"
 				file="plugins-3.6.tar.gz"
-				desc="This installs about 40+ plugins except plugins number 29 to 33 (NFO, Chat, Logoff, Pause and Instant Search).\nMore info at https://github.com/Novik/ruTorrent/wiki/Plugins \nAll dependencies will be installed. \n${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
+				desc="This installs about 40+ plugins except plugins numbers 29 to 33\n (NFO, Chat, Logoff, Pause and Instant Search).\n All dependencies will be installed. \n ${RED}REMEBER TO REMOVE HTTPRPC AND RPC PLUGINS FOR LOGIN TO WORK AT FIRST RUN!${NORMAL}"
+				homepage="https://github.com/Novik/rutorrent/wiki/Plugins"
 				unpack="tar -zxvf $file -C /tmp/"
-				if DOWNLOAD_PLUGIN; then
-					mv /tmp/plugins/* $TEMP_PLUGIN_DIR
-					apt-get -y install php5-geoip ffmpeg curl libzen0 libmediainfo0 mediainfo unrar-free
-				fi
+				PLUGIN_NEEDS="all"
+				DOWNLOAD_PLUGIN
 				;;
-			0)
+			q|Q)
 				break
 				;;
 			*)
+				count=0
 				echo
 				error="${RED}Not a usable number!${NORMAL}"
 				echo
@@ -774,103 +1181,128 @@ function APT_DEPENDENCIES {
 	clear
 	apt-get update
 	# Need to see if some package can be added or removed
-	apt-get -y install openssl git screen curl build-essential automake libtool \
+	apt-get -y install openssl git tmux curl build-essential automake libtool \
 	libcppunit-dev libssl-dev libcurl4-openssl-dev libsigc++-2.0-dev libncurses5-dev
 }
 
 # Function to choose which version the user want
 function CHOOSE_XMLRPC_VERSION {
-	clear
-	HEADER
-	echo " ${BOLD}Super-stable contains very few bugs and have/use features up to 3+ years old."
-	echo " Stable contains some bugs and have/use features up to 2 years old."
-	echo " Advanced contains many bugs and have/use features up to 1/4 year old.${NORMAL}"
-	echo " Choose what version you want to download and install."
-	echo
-	echo " ${NORMAL}[1] - Install super-stable version [recommended]"
-	echo " [2] - Install stable version"
-	echo " [3] - Install advanced version"
-	echo
-	echo " [0] - Show changelogs"
-	echo " [q] - Quit"
-	echo
-	echo -n "${GREEN}>>${NORMAL} "
-	read version
+	count=0
 
-	case "$version" in
-		1)
-			XMLRPC_VERSION=1;
-			INSTALL_XMLRPC
-			;;
-		2)
-			XMLRPC_VERSION=2;
-			INSTALL_XMLRPC
-			;;
-		3)
-			XMLRPC_VERSION=3;
-			INSTALL_XMLRPC
-			;;
-		0)
-			SHOW_XMLRPC_CHANGELOG
-			;;
-		q)
-			clear
-			break
-			;;
-	esac
+	while [ $count -eq 0 ]; do
+		HEADER
+		echo " ${BOLD}Super-stable contains very few bugs and have/use features up to 3+ years old."
+		echo " Stable contains some bugs and have/use features up to 2 years old."
+		echo " Advanced contains many bugs and have/use features up to 1/4 year old.${NORMAL}"
+		echo " Choose what version you want to download and install."
+		echo
+		echo " [1] - Install super-stable version [recommended]"
+		echo " [2] - Install stable version"
+		echo " [3] - Install advanced version"
+		echo
+		echo " [0] - Show changelogs"
+		echo " [q] - Quit"
+		echo
+		echo -e $error
+		unset error
+		echo -n "${GREEN}>>${NORMAL} "
+
+		read -e version
+
+		case "$version" in
+			1)
+				count=1;
+				XMLRPC_VERSION=1;
+				INSTALL_XMLRPC
+				;;
+			2)
+				count=1;
+				XMLRPC_VERSION=2;
+				INSTALL_XMLRPC
+				;;
+			3)
+				XMLRPC_VERSION=3;
+				INSTALL_XMLRPC
+				;;
+			0)
+				count=1;
+				SHOW_XMLRPC_CHANGELOG
+				;;
+			q|Q)
+				clear
+				break
+				;;
+			*)
+				error="${RED} Can't understand your choise!${NORMAL}"
+				;;
+		esac
+	done
 }
 
 # Function to show changelog for super-stable, stable and advanced version of xmlrpc
 function SHOW_XMLRPC_CHANGELOG {
-	clear
-	HEADER
-	echo " Choose what changelog you want to view."
-	echo
-	echo " [1] - Changelog for super-stable version"
-	echo " [2] - Changelog for stable version"
-	echo " [3] - Changelog for advanced version"
-	echo
-	echo " [0] - Back"
-	echo
-	echo -n "${GREEN}>>${NORMAL} "
-	read changelog
+	count=0
 
-	case "$changelog" in
-		1)
-			XMLRPC_VERSION=1;
-			CHANGELOG_XMLRPC
-			;;
-		2)
-			XMLRPC_VERSION=2;
-			CHANGELOG_XMLRPC
-			;;
-		3)
-			XMLRPC_VERSION=3;
-			CHANGELOG_XMLRPC
-			;;
-		0)
-			CHOOSE_XMLRPC_VERSION
-			;;
-	esac
+	while [ $count -eq 0 ]; do
+		HEADER
+		echo " Choose what changelog you want to view."
+		echo
+		echo " [1] - Changelog for super-stable version"
+		echo " [2] - Changelog for stable version"
+		echo " [3] - Changelog for advanced version"
+		echo
+		echo " [0] - Back"
+		echo
+		echo -e $error
+		unset error
+		echo -n "${GREEN}>>${NORMAL} "
+
+		read -e changelog
+
+		case "$changelog" in
+			1)
+				count=1;
+				XMLRPC_VERSION=1;
+				XMLRPC_CHANGELOG
+				;;
+			2)
+				count=1;
+				XMLRPC_VERSION=2;
+				XMLRPC_CHANGELOG
+				;;
+			3)
+				count=1;
+				XMLRPC_VERSION=3;
+				XMLRPC_CHANGELOG
+				;;
+			0)
+				count=1;
+				CHOOSE_XMLRPC_VERSION
+				;;
+			*)
+				error="${RED} Can't understand your choise!${NORMAL}"
+				;;
+		esac
+	done
 }
 
 # Function to show changelog for selected xmlrpc-c version
 # The sed lines need some work, is not perfect at the moment
-function CHANGELOG_XMLRPC {
+function XMLRPC_CHANGELOG {
 	# Use temp folder
-	cd /tmp
+	cd $TEMP_INSTALL_DIR
 
-	if [[ XMLRPC_VERSION -eq 1 ]]; then
+	if [[ $XMLRPC_VERSION -eq 1 ]]; then
 		# Download and show changelog for xmlrpc-c super-stable
-		wget -q http://xmlrpc-c.sourceforge.net/change_super_stable.html -O xmlrpc-ss-changelog.txt 2>&1 /dev/null
+		curl -L http://xmlrpc-c.sourceforge.net/change_super_stable.html -o xmlrpc-ss-changelog.txt
 		sed -n -e '1,17d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-ss-changelog.txt > xmlrpc-changelog.txt
-	elif [[ XMLRPC_VERSION -eq 2 ]]; then
+	elif [[ $XMLRPC_VERSION -eq 2 ]]; then
 		# Download and show changelog for xmlrpc-c stable
-		wget -q http://xmlrpc-c.sourceforge.net/change_stable.html -O xmlrpc-sb-changelog.txt 2>&1 /dev/null
+		curl -L http://xmlrpc-c.sourceforge.net/change_stable.html -o xmlrpc-sb-changelog.txt
 		sed -n -e '1,15d; 21,22d; 32,33d; 49,50d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-sb-changelog.txt > xmlrpc-changelog.txt
-	elif [[ XMLRPC_VERSION -eq 3 ]]; then
+	elif [[ $XMLRPC_VERSION -eq 3 ]]; then
 		# Download and show changelog for xmlrpc-c advanced
-		wget -q http://xmlrpc-c.sourceforge.net/change_advanced.html -O xmlrpc-ad-changelog.txt 2>&1 /dev/null
+		curl -L http://xmlrpc-c.sourceforge.net/change_advanced.html -o xmlrpc-ad-changelog.txt
 		sed -n -e '1,15d' -e 's/&lt;//; s/&gt;//' -e :a -e '/^$/!{s/<[^>]*>//g;p;}; s/^[ t]*//; s/[ t]*$//' xmlrpc-ad-changelog.txt > xmlrpc-changelog.txt
 	fi
 
@@ -887,22 +1319,22 @@ function CHANGELOG_XMLRPC {
 # Function for setting up and install xmlrpc-c
 function INSTALL_XMLRPC {
 	# Use the temp folder for compiling
-	cd /tmp
+	cd $TEMP_INSTALL_DIR
 
-	if [[ XMLRPC_VERSION -eq 1 ]]; then
+	if [[ $XMLRPC_VERSION -eq 1 ]]; then
 		# Download and install xmlrpc-c super-stable from sourceforge
 		curl -q -L http://sourceforge.net/projects/xmlrpc-c/files/latest/download -o xmlrpc-c.tgz
 		tar zxvf xmlrpc-c.tgz
 		mv xmlrpc-c-1.* xmlrpc
 		cd xmlrpc
-	elif [[ XMLRPC_VERSION -eq 2 ]]; then
+	elif [[ $XMLRPC_VERSION -eq 2 ]]; then
 		# Package subversion is needed
 		apt-get -y install subversion
 
 		# Download and install xmlrpc-c stable from sourceforge SVN
 		svn checkout http://svn.code.sf.net/p/xmlrpc-c/code/stable xmlrpc
 		cd xmlrpc
-	elif [[ XMLRPC_VERSION -eq 3 ]]; then
+	elif [[ $XMLRPC_VERSION -eq 3 ]]; then
 		# Package subversion is needed
 		apt-get -y install subversion
 
@@ -912,39 +1344,38 @@ function INSTALL_XMLRPC {
 	fi
 
 	# Check if xmlrpc directory exist
-	if [[ -d /tmp/xmlrpc ]]; then
-		if [[ COMPILE_FLAGS -eq 1 ]]; then
-			# if is a rpi b/b+
+	if [[ -d $TEMP_INSTALL_DIR/xmlrpc ]]; then
+		if [[ $COMPILE_FLAGS -eq 1 ]]; then
+			# if is a rpi a/a+/b/b+
 			./configure --disable-cplusplus 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
 			make
-			make install
-		elif [[ COMPILE_FLAGS -eq 2 ]]; then
+		elif [[ $COMPILE_FLAGS -eq 2 ]]; then
 			# if is a rpi2
 			./configure --disable-cplusplus 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
 			make -j2
-			make install
-		elif [[ COMPILE_FLAGS -eq 0 ]]; then
+		elif [[ $COMPILE_FLAGS -eq 0 ]]; then
 			# if rpi version can not be retrived, is compiled with the default system flags
 			./configure --disable-cplusplus
 			make
-			make install
 		fi
+
+		make install
+
 	else
 		echo
 		echo "${RED}Something went wrong...Error!${NORMAL}"
+		read -p " Press any key to continue..." -n 1
 	fi
 }
 
 # Function for setting up and install libtorrent
 function INSTALL_LIBTORRENT {
-	clear
-
 	# Use the temp folder for compiling
-	cd /tmp
+	cd $TEMP_INSTALL_DIR
 
 	# Create and move into the folder
-	mkdir rtorrent
-	cd rtorrent
+	mkdir rtorrent-$RTORRENT_VERSION
+	cd rtorrent-$RTORRENT_VERSION
 
 	# Download and install libtorrent
 	curl -L https://github.com/rakshasa/libtorrent/archive/""$LIBTORRENT_VERSION"".tar.gz -o libtorrent-""$LIBTORRENT_VERSION"".tar.gz
@@ -952,21 +1383,28 @@ function INSTALL_LIBTORRENT {
 	cd libtorrent-$LIBTORRENT_VERSION
 	./autogen.sh
 
-	if [[ COMPILE_FLAGS -eq 1 ]]; then
-		# if is a rpi b/b+
-		./configure 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
-		make
+	# Check if libtorrent directory exist
+	if [[ -d $TEMP_INSTALL_DIR/rtorrent/libtorrent-$LIBTORRENT_VERSION ]]; then
+		if [[ $COMPILE_FLAGS -eq 1 ]]; then
+			# if is a rpi a/a+/b/b+
+			./configure 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3 --disable-instrumentation'
+			make
+		elif [[ $COMPILE_FLAGS -eq 2 ]]; then
+			# if is a rpi2
+			./configure 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3 --disable-instrumentation'
+			make -j2
+		elif [[ $COMPILE_FLAGS -eq 0 ]]; then
+			# if rpi version can not be retrived, is compiled with the default system flags
+			./configure
+			make
+		fi
+
 		make install
-	elif [[ COMPILE_FLAGS -eq 2 ]]; then
-		# if is a rpi2
-		./configure 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
-		make -j2
-		make install
-	elif [[ COMPILE_FLAGS -eq 0 ]]; then
-		# if rpi version can not be retrived, is compiled with the default system flags
-		./configure
-		make
-		make install
+		
+	else
+		echo
+		echo "${RED}Something went wrong...Error!${NORMAL}"
+		read -p " Press any key to continue..." -n 1
 	fi
 
 	# Move out from folder
@@ -975,10 +1413,8 @@ function INSTALL_LIBTORRENT {
 
 # Function for setting up and install rtorrent
 function INSTALL_RTORRENT {
-	clear
-
 	# Use the temp folder for compiling
-	cd /tmp
+	cd $TEMP_INSTALL_DIR
 
 	# Download and install rtorrent
 	curl -L https://github.com/rakshasa/rtorrent/archive/""$RTORRENT_VERSION"".tar.gz -o rtorrent-""$RTORRENT_VERSION"".tar.gz
@@ -986,21 +1422,28 @@ function INSTALL_RTORRENT {
 	cd rtorrent-$RTORRENT_VERSION
 	./autogen.sh
 
-	if [[ COMPILE_FLAGS -eq 1 ]]; then
-		# if is a rpi b/b+
-		./configure --with-xmlrpc-c 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
-		make
+	# Check if rtorrent directory exist
+	if [[ -d $TEMP_INSTALL_DIR/rtorrent-$RTORRENT_VERSION ]]; then
+		if [[ $COMPILE_FLAGS -eq 1 ]]; then
+			# if is a rpi a/a+/b/b+
+			./configure --with-xmlrpc-c 'CFLAGS=-march=armv6 -mcpu=arm1176jzf-s -mfloat-abi=hard -mfpu=vfp -ffast-math -pipe -O3'
+			make
+		elif [[ $COMPILE_FLAGS -eq 2 ]]; then
+			# if is a rpi2
+			./configure --with-xmlrpc-c 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
+			make -j2
+		elif [[ $COMPILE_FLAGS -eq 0 ]]; then
+			# if rpi version can not be retrived, is compiled with the default system flags
+			./configure --with-xmlrpc-c
+			make
+		fi
+
 		make install
-	elif [[ COMPILE_FLAGS -eq 2 ]]; then
-		# if is a rpi2
-		./configure --with-xmlrpc-c 'CFLAGS=-march=armv7-a -mcpu=cortex-a7 -mfloat-abi=hard -mfpu=neon-vfpv4 -funsafe-math-optimizations -O3'
-		make -j2
-		make install
-	elif [[ COMPILE_FLAGS -eq 0 ]]; then
-		# if rpi version can not be retrived, is compiled with the default system flags
-		./configure --with-xmlrpc-c
-		make
-		make install
+
+	else
+		echo
+		echo "${RED}Something went wrong...Error!${NORMAL}"
+		read -p " Press any key to continue..." -n 1
 	fi
 
 	# Move out from folder and delete it
@@ -1010,7 +1453,7 @@ function INSTALL_RTORRENT {
 	ldconfig
 
 	# Creating session directory
-	if [ ! -d $RTORRENT_HOME_DIR/.rtorrent-session ]; then
+	if [[ ! -d $RTORRENT_HOME_DIR/.rtorrent-session ]]; then
 		mkdir "$RTORRENT_HOME_DIR"/.rtorrent-session
 		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/.rtorrent-session
 	else
@@ -1018,7 +1461,7 @@ function INSTALL_RTORRENT {
 	fi
 
 	# Creating downloads folder
-	if [ ! -d "$RTORRENT_HOME_DIR"/Downloads ]; then
+	if [[ ! -d $RTORRENT_HOME_DIR/Downloads ]]; then
 		mkdir "$RTORRENT_HOME_DIR"/Downloads
 		chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/Downloads
 	else
@@ -1026,27 +1469,27 @@ function INSTALL_RTORRENT {
 	fi
 
 	# Downloading rtorrent.rc file.
-	wget -O $RTORRENT_HOME_DIR/.rtorrent.rc https://raw.github.com/Kerwood/rtorrent.auto.install/master/Files/rtorrent.rc
-	chown "$RTORRENT_USER"."$RTORRENT_USER" $RTORRENT_HOME_DIR/.rtorrent.rc
-	sed -i "s@HOMEDIRHERE@$RTORRENT_HOME_DIR@g" $RTORRENT_HOME_DIR/.rtorrent.rc
+	curl -L https://raw.github.com/Kerwood/rtorrent.auto.install/master/Files/rtorrent.rc -o "$RTORRENT_HOME_DIR"/.rtorrent.rc
+	chown "$RTORRENT_USER"."$RTORRENT_USER" "$RTORRENT_HOME_DIR"/.rtorrent.rc
+	sed -i "s@HOMEDIRHERE@$RTORRENT_HOME_DIR@g" "$RTORRENT_HOME_DIR"/.rtorrent.rc
 }
 
 # Function for installing rutorrent and plugins
 function INSTALL_RUTORRENT {
 	# Download and install rutorrent
-	curl -L http://dl.bintray.com/novik65/generic/rutorrent-""$RUTORRENT_VERSION"".tar.gz -o rutorrent-""$RUTORRENT_VERSION"".tar.gz
+	curl -L http://dl.bintray.com/novik65/generic/rutorrent-$RUTORRENT_VERSION.tar.gz -o rutorrent-"$RUTORRENT_VERSION".tar.gz
 	tar -zxvf rutorrent-$RUTORRENT_VERSION.tar.gz
 
-	if [ -d "/var/www/rutorrent" ]; then rm -rf /var/www/rutorrent; fi
+	if [[ -d /usr/share/nginx/html/rutorrent ]]; then rm -rf /usr/share/nginx/html/rutorrent; fi
 
-	mv -f rutorrent /var/www/
+	mv -f rutorrent /usr/share/nginx/html/
 	rm -v rutorrent-$RUTORRENT_VERSION.tar.gz
 
-	if [ -d "$TEMP_PLUGIN_DIR" ]; then mv -fv "$TEMP_PLUGIN_DIR"/* /var/www/rutorrent/plugins; fi
+	if [[ -d $TEMP_PLUGIN_DIR ]]; then mv -fv "$TEMP_PLUGIN_DIR"/* /usr/share/nginx/html/rutorrent/plugins; fi
 
 	# Changing permissions for rutorrent and plugins
-	chown -R www-data:www-data /var/www/rutorrent
-	chmod -R 775 /var/www/rutorrent
+	chown -R www-data:www-data /usr/share/nginx/html/rutorrent
+	chmod -R 775 /usr/share/nginx/html/rutorrent
 
 	# Changeing SCGI mount point in rutorrent config
 	sed -i "s/\/RPC2/\/rutorrent\/RPC2/g" ./rutorrent/conf/config.php
@@ -1077,33 +1520,33 @@ function CONFIGURE_NGINX {
 			index index.php index.html index.htm;
 
 			location /rutorrent {
-					access_log /var/log/nginx/rutorrent.access.log;
-					error_log /var/log/nginx/rutorrent.error.log;
-					auth_basic "Restricted";
-					auth_basic_user_file /var/www/rutorrent/.htpasswd;
-					location ~ .php$ {
-							fastcgi_split_path_info ^(.+\.php)(.*)$;
-							fastcgi_pass    backendrutorrent;
-							fastcgi_index   index.php;
-							fastcgi_param   SCRIPT_FILENAME $document_root/rutorrent$fastcgi_script_name;
-							include fastcgi_params;
-							fastcgi_intercept_errors        on;
-							fastcgi_ignore_client_abort     off;
-							fastcgi_connect_timeout         60;
-							fastcgi_send_timeout            180;
-							fastcgi_read_timeout            180;
-							fastcgi_buffer_size             128k;
-							fastcgi_buffers                 4       256k;
-							fastcgi_busy_buffers_size       256k;
-							fastcgi_temp_file_write_size    256k;
-					}
+				access_log /var/log/nginx/rutorrent.access.log;
+				error_log /var/log/nginx/rutorrent.error.log;
+				auth_basic "Restricted";
+				auth_basic_user_file /var/www/rutorrent/.htpasswd;
+				location ~ .php$ {
+					fastcgi_split_path_info ^(.+\.php)(.*)$;
+					fastcgi_pass    backendrutorrent;
+					fastcgi_index   index.php;
+					fastcgi_param   SCRIPT_FILENAME $document_root/rutorrent$fastcgi_script_name;
+					include fastcgi_params;
+					fastcgi_intercept_errors        on;
+					fastcgi_ignore_client_abort     off;
+					fastcgi_connect_timeout         60;
+					fastcgi_send_timeout            180;
+					fastcgi_read_timeout            180;
+					fastcgi_buffer_size             128k;
+					fastcgi_buffers                 4       256k;
+					fastcgi_busy_buffers_size       256k;
+					fastcgi_temp_file_write_size    256k;
+				}
 			}
 
 			location /RPC2 {
-					access_log /var/log/nginx/rutorrent.rpc2.access.log;
-					error_log /var/log/nginx/rutorrent.rpc2.error.log;
-					include /etc/nginx/scgi_params;
-					scgi_pass backendrtorrent;
+				access_log /var/log/nginx/rutorrent.rpc2.access.log;
+				error_log /var/log/nginx/rutorrent.rpc2.error.log;
+				include /etc/nginx/scgi_params;
+				scgi_pass backendrtorrent;
 			}
 		}
 		EOF
@@ -1147,9 +1590,9 @@ function CONFIGURE_NGINX {
 		}
 		EOF
 
-		if [ ! -d /etc/php5/fpm/pool.d ]; then
-			mkdir -p /etc/php5/fpm/pool.d
-			if [ ! -f /etc/php5/fpm/pool.d/rutorrent.conf ]; then
+		if [[ ! -d /etc/php5/fpm/pool.d ]]; then
+			mkdir -vp /etc/php5/fpm/pool.d
+			if [[ ! -f /etc/php5/fpm/pool.d/rutorrent.conf ]]; then
 				cat >/etc/php5/fpm/pool.d/rutorrent.conf <<- 'EOF'
 				[rutorrent]
 				user = www-data
@@ -1183,12 +1626,10 @@ function CONFIGURE_NGINX {
 		sed -i "s/;listen\.mode.*/listen.mode = 0660/" /etc/php5/fpm/pool.d/www.conf # This passage in not required normally
 
 		# Enable the nginx config file for rutorrent
-		cd /etc/nginx/sites-enabled
-		ln -s ../sites-available/default
+		ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled
 
-				# Enable the nginx config file for rutorrent
-		cd /etc/nginx/sites-enabled
-		ln -s ../sites-available/rutorrent.conf
+		# Enable the nginx config file for rutorrent
+		ln -s /etc/nginx/sites-available/rutorrent /etc/nginx/sites-enabled
 	fi
 
 	# Restart nginx and php5-fpm
@@ -1200,9 +1641,9 @@ function CONFIGURE_NGINX {
 }
 
 function PREPARE_FOLDERS {
-	if [[ ! -d "/var/www" ]]; then mkdir -p /var/www; fi
+	if [[ ! -d /var/www ]]; then mkdir -p /var/www; fi
 
-	if [[ ! -d "$RTORRENT_HOME_DIR/downloads" ]] || [[ ! -d "$RTORRENT_HOME_DIR/watch" ]] || [[ ! -d "$RTORRENT_HOME_DIR/.session" ]] || [[ ! -d "$RTORRENT_HOME_DIR/.sockets" ]]; then
+	if [[ ! -d $RTORRENT_HOME_DIR/downloads ]] || [[ ! -d $RTORRENT_HOME_DIR/watch ]] || [[ ! -d $RTORRENT_HOME_DIR/.session ]] || [[ ! -d $RTORRENT_HOME_DIR/.sockets ]]; then
 		mkdir $RTORRENT_HOME_DIR/downloads
 		mkdir $RTORRENT_HOME_DIR/watch
 		mkdir $RTORRENT_HOME_DIR/.session
@@ -1241,26 +1682,22 @@ function INSTALL_COMPLETE {
 	echo "you need to edit the '.rtorrent.rc' file. E.g. 'nano $RTORRENT_HOME_DIR/.rtorrent.rc'${NORMAL}"
 	echo
 
-	# The IPv6 local address, is not very used for now, anyway if needed, just change 'inet' to 'inet6'
-	LOCAL_IP=$(ip addr | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v "127." | head -n 1)
+	LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
 	EXTERNAL_IP=$(curl -s http://icanhazip.com)
 
-	if [[ ! -z "$LOCAL_IP" ]] && [[ ! -z "$EXTERNAL_IP" ]]; then
+	if [[ ! -z $LOCAL_IP && ! -z $EXTERNAL_IP ]]; then
 		echo "${LBLUE}LOCAL IP:${NORMAL} http://$LOCAL_IP/rutorrent"
 		echo "${LBLUE}EXTERNAL IP:${NORMAL} http://$EXTERNAL_IP/rutorrent"
 		echo "Visit rutorrent through the above address."
-		echo 
-	elif [[ -z "$LOCAL_IP" ]]; then
+	elif [[ -z $LOCAL_IP ]]; then
 		echo "Can't detect the local IP address"
 		echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-		echo 
-	elif [[ -z "$EXTERNAL_IP" ]]; then
+	elif [[ -z $EXTERNAL_IP ]]; then
 		echo "${LBLUE}LOCAL:${NORMAL} http://$LOCAL_IP/rutorrent"
 		echo "Visit rutorrent through your local network"
 	else
 		echo "Can't detect the IP address"
 		echo "Try visit rutorrent at http://127.0.0.1/rutorrent"
-		echo
 	fi
 	echo
 }
@@ -1278,44 +1715,42 @@ SET_WEB_USER
 while true; do
 	HEADER
 
-	if [[ "$RPI_VERSION" == "Unknown" ]]; then
+	if [[ $RASPBERRY_VERSION == "Unknown" ]]; then
 		echo " ${BOLD}Raspberry${NORMAL}${RED} Unknown Version${NORMAL}"
 		echo " ${PURPLE}Open a news issue to report our hardware at https://github.com/Kerwood/rtorrent.auto.install"
 		echo " by copying the result of the following command:\n ${BOLD}grep Revision /proc/cpuinfo | cut -d \" \" -f 2${NORMAL}"
-	elif [[ "$RPI_VERSION" == "2 B - 1GB" ]]; then
-		echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
-		echo "${RED} WARNING!!!"
-		echo " You are using a RPI 2, the support for it, is HIGHLY EXPERIMENTAL at the moment."
-		echo " Continue at you own risk!"
-		echo " Please report every issue found at https://github.com/Kerwood/rtorrent.auto.install${NORMAL}"
-		echo "${BOLD}--------------------------------------------------------------------------------${NORMAL}"
 	else
 		echo " ${BOLD}Raspberry${NORMAL}${GREEN} $RPI_VERSION${NORMAL}"
 	fi
 
+		echo
+	echo " rTorrent version:   ${BOLD}${RED}$RTORRENT_VERSION${NORMAL}"
+	echo " libTorrent version: ${BOLD}${RED}$LIBTORRENT_VERSION${NORMAL}"
+	echo " ruTorrent version:  ${BOLD}${RED}$RUTORRENT_VERSION${NORMAL}"
 	echo
-	echo " ${BOLD}rTorrent version:${NORMAL}   ${RED}$RTORRENT_VERSION${NORMAL}"
-	echo " ${BOLD}libTorrent version:${NORMAL} ${RED}$LIBTORRENT_VERSION${NORMAL}"
-	echo " ${BOLD}ruTorrent version:${NORMAL}  ${RED}$RUTORRENT_VERSION${NORMAL}"
+	echo " rTorrent user: ${BOLD}${GREEN} $RTORRENT_USER${NORMAL}"
+	echo -n " ruTorrent user(s): ${BOLD}${GREEN}" && LIST_WEB_USERS
 	echo
-	echo " ${BOLD}rTorrent user:${NORMAL}${GREEN} $RTORRENT_USER${NORMAL}"
-	echo -n " ${BOLD}ruTorrent user(s):${NORMAL}${GREEN}"
-	LIST_WEB_USERS
+	echo " ${NORMAL}ruTorrent plugins: ${BOLD}${GREEN}" && LIST_PLUGINS
 	echo
-	echo " ${NORMAL}${BOLD}ruTorrent plugins:${NORMAL}${GREEN}"
-	LIST_PLUGINS
+	echo " ${NORMAL}Temp Installation directory: ${BOLD}${GREEN}$TEMP_INSTALL_DIR${NORMAL}"
+	echo " Temp Plugins directory: ${BOLD}${GREEN}$TEMP_PLUGIN_DIR${NORMAL}"
 	echo
-	echo " ${NORMAL}[1] - Change rTorrent user"
+	echo " [1] - Change rTorrent user"
 	echo " [2] - Add another ruTorrent user"
 	echo " [3] - Download plugins"
+	echo " [4] - Change Temp Install directory"
+	echo " [5] - Change Temp Plugins directory"
 	echo
 	echo " [0] - Start installation"
 	echo " [q] - Quit"
-	echo
-	echo -n "${GREEN}>>${NORMAL} "
+	echo -e $error
+	unset error
+	echo -n "${BOLD}${GREEN}>>${NORMAL} "
+
 	read -e install
 
-	case "$install" in
+	case $install in
 		1)
 			SET_RTORRENT_USER
 			;;
@@ -1325,21 +1760,31 @@ while true; do
 		3)
 			SELECT_PLUGINS
 			;;
+		4)
+			CHANGE_TEMP_INSTALL_DIR
+			;;
+		5)
+			CHANGE_TEMP_PLUGINS_DIR
+			;;
 		0)
+			CHOOSE_WEB_SERVER
 			APT_DEPENDENCIES
 			PREPARE_FOLDERS
 			CHOOSE_XMLRPC_VERSION
 			INSTALL_LIBTORRENT
 			INSTALL_RTORRENT
 			INSTALL_RUTORRENT
-			CONFIGURE_NGINX
+			CONFIGURE_WEB_SERVER
 			SETUP_INIT
 			INSTALL_COMPLETE
 			break
 			;;
-		q)
+		q|Q)
 			clear
 			break
+			;;
+		*)
+			error="${RED} Can't understand your choise!${NORMAL}"
 			;;
 	esac
 done
