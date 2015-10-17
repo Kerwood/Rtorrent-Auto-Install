@@ -142,7 +142,7 @@ function CHECK_APACHE_INST {
 	while [ $count -eq 0 ]; do
 		APACHE_CHECK="$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")"
 
-		if [[ $APACHE2_CHECK -eq 1 ]; then
+		if [[ $APACHE2_CHECK -eq 1 ]]; then
 			echo -e " Apache2 is installed on this system, for avoid errors is required to unistall it\n or just remove the service from start at boot."
 			echo
 			read -p " Do you want to remove the service from start at boot? [Y/n] " -n 1
