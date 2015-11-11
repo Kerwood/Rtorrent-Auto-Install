@@ -656,7 +656,7 @@ function SELECT_PLUGINS {
 }
 
 # Function for installing dependencies
-function APT-DEPENDENCIES {
+function APT_DEPENDENCIES {
 	apt-get update
 	apt-get -y install openssl git screen curl build-essential automake libtool \
 	libcppunit-dev libssl-dev libcurl4-openssl-dev libsigc++-2.0-dev libncurses5-dev
