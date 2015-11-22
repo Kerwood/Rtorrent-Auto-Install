@@ -162,7 +162,7 @@ function DOWNLOAD_PLUGIN {
 
 	if [[ $REPLY =~ [Yy]$ ]]; then
 		echo
-		wget "$url"
+		curl -L "$url" -o $file
 		$unpack
 		if [ $? -eq "0" ]; then
 			rm "$file"
