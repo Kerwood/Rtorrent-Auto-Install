@@ -33,11 +33,11 @@ function CHECK_ROOT {
 # Function to check or change your plugins folders
 function CHECK_PLUGINS_FOLDER {
 	echo " Please enter the path to your rutorrent plugins folder."
-	echo -n " Leave blank for default [/var/www/rutorrent/plugins]: "
+	echo -n " Leave blank for default [/var/www/html/rutorrent/plugins]: "
 	read DIR
 
 	if [[ -z "$DIR" ]]; then
-		PLUGINS_DIR="/var/www/rutorrent/plugins"
+		PLUGINS_DIR="/var/www/html/rutorrent/plugins"
 	else
 		count=0
 		while [ $count -eq 0 ]; do
