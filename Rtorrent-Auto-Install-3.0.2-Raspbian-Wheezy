@@ -683,7 +683,7 @@ function INSTALL_RTORRENT {
 	cd rtorrent
 
 	# Download and install libtorrent
-	wget https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -o libtorrent-0.13.4.tar.gz
+	wget https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -O libtorrent-0.13.4.tar.gz
 	tar -zxvf libtorrent-0.13.4.tar.gz
 	cd libtorrent-0.13.4
 	./autogen.sh
@@ -693,7 +693,7 @@ function INSTALL_RTORRENT {
 	cd ..
 
 	# Downlaod and install rtorrent
-	wget https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -o rtorrent-0.9.4.tar.gz
+	wget https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -O rtorrent-0.9.4.tar.gz
 	tar -zxvf rtorrent-0.9.4.tar.gz
 	cd rtorrent-0.9.4
 	./autogen.sh
