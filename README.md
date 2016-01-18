@@ -1,3 +1,6 @@
+# SCRIPT IS NOT WORKING RIGHT NOW.. I am working on it.
+
+
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
 
 http://LinuxBloggen.dk/
