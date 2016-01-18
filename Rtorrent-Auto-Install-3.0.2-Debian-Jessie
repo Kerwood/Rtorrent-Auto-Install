@@ -79,13 +79,13 @@ function SET_RTORRENT_USER {
 		echo -n "Please type a valid system user: "
 		read RTORRENT_USER
 
-		if [ -z $(cat /etc/passwd | grep "^$RTORRENT_USER:") ]; then
+		if [[ -z $(cat /etc/passwd | grep "^$RTORRENT_USER:") ]]; then
 			echo
 			echo "This user does not exist!"
-		elif [ $(cat /etc/passwd | grep "^$RTORRENT_USER:" | cut -d: -f3) -lt 999 ]; then
+		elif [[ $(cat /etc/passwd | grep "^$RTORRENT_USER:" | cut -d: -f3) -lt 999 ]]; then
 			echo
 			echo "That user's UID is too low!"
-		elif [ $RTORRENT_USER == nobody ]; then
+		elif [[ $RTORRENT_USER == nobody ]]; then
 			echo
 			echo "You cant use 'nobody' as user!"
 		else
@@ -716,8 +716,8 @@ function INSTALL_RTORRENT {
 	cd /tmp
 
 	# Download and install xmlrpc-c super-stable
-	curl -L http://sourceforge.net/projects/xmlrpc-c/files/latest/download -o xmlrpc-c-latest.tgz
-	tar zxvf xmlrpc-c-latest.tgz
+	curl -L http://sourceforge.net/projects/xmlrpc-c/files/Xmlrpc-c%20Super%20Stable/1.33.18/xmlrpc-c-1.33.18.tgz/download -o xmlrpc-c.tgz
+	tar zxvf xmlrpc-c.tgz
 	mv xmlrpc-c-1.* xmlrpc
 	cd xmlrpc
 	./configure --disable-cplusplus
@@ -731,9 +731,9 @@ function INSTALL_RTORRENT {
 	cd rtorrent
 
 	# Download and install libtorrent
-	curl -L https://github.com/rakshasa/libtorrent/archive/0.13.4.tar.gz -o libtorrent-0.13.4.tar.gz
-	tar -zxvf libtorrent-0.13.4.tar.gz
-	cd libtorrent-0.13.4
+	curl -L http://rtorrent.net/downloads/libtorrent-0.13.6.tar.gz -o libtorrent.tar.gz
+	tar -zxvf libtorrent.tar.gz
+	cd libtorrent-0.13.6
 	./autogen.sh
 	./configure
 	make
@@ -742,9 +742,9 @@ function INSTALL_RTORRENT {
 	cd ..
 
 	# Download and install rtorrent
-	curl -L https://github.com/rakshasa/rtorrent/archive/0.9.4.tar.gz -o rtorrent-0.9.4.tar.gz
-	tar -zxvf rtorrent-0.9.4.tar.gz
-	cd rtorrent-0.9.4
+	curl -L http://rtorrent.net/downloads/rtorrent-0.9.6.tar.gz -o rtorrent.tar.gz
+	tar -zxvf rtorrent.tar.gz
+	cd rtorrent-0.9.6
 	./autogen.sh
 	./configure --with-xmlrpc-c
 	make
