@@ -1,4 +1,4 @@
-# SCRIPT IS NOT WORKING RIGHT NOW.. I am working on it.
+# Version 4.0.0 should be working again.
 
 
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
