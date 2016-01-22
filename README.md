@@ -1,7 +1,6 @@
-# Version 4.0.0 should be working again.
-
 
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
+# Version 4.0.0 should be working again.
 
 http://LinuxBloggen.dk/
 
