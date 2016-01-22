@@ -32,10 +32,10 @@ Installation
 Installation video - https://www.youtube.com/watch?v=3iwsoKcUgn0
 
 Actual version for the scripts: 
-- Wheezy **3.0.2**
-- Jessie **3.0.2**
-- Raspbian **3.0.2**
-- Raspbian Nginx **1.1.0**
+- Wheezy **4.0.0**
+- Jessie **4.0.0**
+- ~~Raspbian 3.0.2~~ - Not maintained, you can find it in the RaspberryPi branch.
+- ~~Raspbian Nginx 1.1.0~~ Not maintained, you can find it in the RaspberryPi branch.
 
 Download the script. Remember to change the X.X.X to the actual version.
 
