@@ -822,24 +822,31 @@ function CONFIGURE_APACHE {
 	# Creating Apache virtual host
 	if [ ! -f /etc/apache2/sites-available/rutorrent.conf ]; then
 
-		cat > /etc/apache2/sites-available/rutorrent.conf << EOF
+		cat > /etc/apache2/sites-available/001-default-rutorrent.conf << EOF 
 <VirtualHost *:80>
-	ServerAlias *
-	DocumentRoot /var/www/html/
-	CustomLog /var/log/apache2/rutorrent.log vhost_combined
-	ErrorLog /var/log/apache2/rutorrent_error.log
-	SCGIMount /rutorrent/RPC2 127.0.0.1:5000
+    #ServerName www.example.com
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
 
-	<Directory "/var/www/html/rutorrent">
-		AuthName "Tits or GTFO"
-		AuthType Basic
-		Require valid-user
-		AuthUserFile /var/www/html/rutorrent/.htpasswd
-	</Directory>
+    CustomLog /var/log/apache2/rutorrent.log vhost_combined
+    ErrorLog /var/log/apache2/rutorrent_error.log
+    SCGIMount /rutorrent/RPC2 127.0.0.1:5000
+
+    <Directory "/var/www/html/rutorrent">
+        AuthName "Tits or GTFO"
+        AuthType Basic
+        Require valid-user
+        AuthUserFile /var/www/html/rutorrent/.htpasswd
+    </Directory>
+
 </VirtualHost>
-EOF
 
-		a2ensite rutorrent.conf
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+EOF
+		a2ensite 001-default-rutorrent.conf
+		a2dissite 000-default.conf
 		systemctl restart apache2.service
 	fi
 
@@ -862,6 +869,10 @@ function INSTALL_COMPLETE {
 	HEADER
 
 	echo "${GREEN}Installation is complete.${NORMAL}"
+	echo
+	echo
+	echo "${RED}Your default Apache2 vhost file has been disabled and replaced with a new one.${NORMAL}"
+	echo "${RED}If you were using it, combine the default and rutorrent vhost file and enable it again.${NORMAL}"
 	echo
 	echo "${PURPLE}Your downloads folder is in ${LBLUE}$HOMEDIR/Downloads${NORMAL}"
 	echo "${PURPLE}Sessions data is ${LBLUE}$HOMEDIR/.rtorrent-session${NORMAL}"
