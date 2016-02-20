@@ -7,18 +7,18 @@ http://LinuxBloggen.dk/
 
 These are Bash scripts to ease the installation of rtorrent, rutorrent + plugins.
 
-**Debian Wheezy**  
-The Wheezy script is of course developed for Wheezy but should run just fine on Ubuntu 13.04 and 14.04.  
+**Debian Wheezy**
+The Wheezy script is of course developed for Wheezy but should run just fine on Ubuntu 13.04 and 14.04.
 
-**Debian Jessie**  
+**Debian Jessie**
 The Jessie script was adapted for the new default init system. Should run fine on systems that feature systemd (including Ubuntu 15.04+).
 
 Please use `systemctl start rtorrent` and `systemctl stop rtorrent` instead of the service command.
 
-**Raspbian Wheezy**  
+**Raspbian Wheezy**
 Credit for the Raspbian script goes to [miracle091](https://github.com/miracle091), good work mate.
 
-**What the scripts do**  
+**What the scripts do**
 In the installation process you have to choose a system user to run rtorrent.
 Also you will get the opportunity of installing a total of 46 plugins. See list further down.
 The script add a init script that makes rtorrent start, at a possible reboot, in the
@@ -76,8 +76,8 @@ This scripts installs the following packages:
 	unrar-free
 	unzip
 
-The script compiles and installs lastest super-stable xmlrpc-c from sourceforge.  
-Installs rtorrent-0.9.4 and libtorrent-0.13.4 from github.  
+The script compiles and installs lastest super-stable xmlrpc-c from sourceforge.
+Installs rtorrent-0.9.6 and libtorrent-0.13.6 from github.
 Install rutorrent-3.6 from novik65 official site.
 
 **Plugins List**
