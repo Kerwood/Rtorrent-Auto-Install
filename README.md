@@ -1,9 +1,10 @@
 
 # Rtorrent + Rutorrent Auto Install Script by Patrick Kerwood
-# Version 4.0.0 should be working again.
 
 http://LinuxBloggen.dk/
 
+## Docker
+Check out the Rtorrent + Rutorrent Docker container. Get started with rtorrent in just seconds.
 
 These are Bash scripts to ease the installation of rtorrent, rutorrent + plugins.
 
