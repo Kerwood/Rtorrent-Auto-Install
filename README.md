@@ -7,7 +7,7 @@ http://LinuxBloggen.dk/
 Check out the Rtorrent + Rutorrent Docker container. Get started with rtorrent in just seconds.  
 [https://github.com/Kerwood/Rtorrent-LXC](https://github.com/Kerwood/Rtorrent-LXC)
 
-
+## Manual install
 These are Bash scripts to ease the installation of rtorrent, rutorrent + plugins.
 
 **Debian Wheezy**
