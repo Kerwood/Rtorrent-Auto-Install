@@ -42,13 +42,14 @@ function CHECK_ROOT {
 function APACHE_UTILS {
 	AP_UT_CHECK="$(dpkg-query -W -f='${Status}' apache2-utils 2>/dev/null | grep -c "ok installed")"
 	UNZIP_CHECK="$(dpkg-query -W -f='${Status}' unzip 2>/dev/null | grep -c "ok installed")"
+	CURL_CHECK="$(dpkg-query -W -f='${Status}' curl 2>/dev/null | grep -c "ok installed")"
 
-	if [ "$AP_UT_CHECK" -ne 1 ] || [ "$UNZIP_CHECK" -ne 1 ]; then
-		echo " One or both of the packages apache2-utils and unzip is not installed and is needed for the setup."
+	if [ "$AP_UT_CHECK" -ne 1 ] || [ "$UNZIP_CHECK" -ne 1 ] || [ "CURL_CHECK" -ne 1 ]; then
+		echo " One or more of the packages apache2-utils, unzip or curl is not installed and is needed for the setup."
 		read -p " Do you want to install it? [y/n] " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			clear
-			apt-get -y install apache2-utils unzip
+			apt-get -y install apache2-utils unzip curl
 		else
 			clear
 			exit
