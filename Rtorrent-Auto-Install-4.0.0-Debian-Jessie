@@ -49,6 +49,7 @@ function APACHE_UTILS {
 		read -p " Do you want to install it? [y/n] " -n 1
 		if [[ $REPLY =~ [Yy]$ ]]; then
 			clear
+			apt-get update
 			apt-get -y install apache2-utils unzip curl
 		else
 			clear
