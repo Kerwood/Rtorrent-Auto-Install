@@ -3,6 +3,12 @@
 
 http://LinuxBloggen.dk/
 
+**This is script is no longer maintained and there will not be a release for Debian 9, because of the fabulous container technology that is available in this modern time. If you haven't alrady become familiar with this technology, you might as well begin now. Developers world wide are releasing more and more products as containers, as is my Rutorrent script.**
+
+**Containers just make is easier for everyone.**
+
+[Install Docker today](https://docs.docker.com/install/linux/docker-ce/debian/#install-docker-ce)
+
 ## Docker
 Check out the Rtorrent + Rutorrent Docker container. Get started with rtorrent in just seconds.  
 [https://github.com/Kerwood/Rtorrent-LXC](https://github.com/Kerwood/Rtorrent-LXC)
